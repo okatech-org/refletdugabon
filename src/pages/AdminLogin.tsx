@@ -12,6 +12,7 @@ const AdminLogin = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,7 +23,17 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
+      if (isResetPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+          redirectTo: `${window.location.origin}/admin/login`,
+        });
+        if (error) throw error;
+        toast({
+          title: "Email envoyé !",
+          description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
+        });
+        setIsResetPassword(false);
+      } else if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -69,12 +80,18 @@ const AdminLogin = () => {
                 <Lock className="w-8 h-8 text-primary" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">
-                {isSignUp ? "Créer un compte" : "Administration"}
+                {isResetPassword 
+                  ? "Réinitialiser le mot de passe" 
+                  : isSignUp 
+                    ? "Créer un compte" 
+                    : "Administration"}
               </h1>
               <p className="text-muted-foreground mt-2">
-                {isSignUp
-                  ? "Créez votre compte administrateur"
-                  : "Connectez-vous pour gérer le site"}
+                {isResetPassword
+                  ? "Entrez votre email pour recevoir un lien de réinitialisation"
+                  : isSignUp
+                    ? "Créez votre compte administrateur"
+                    : "Connectez-vous pour gérer le site"}
               </p>
             </div>
 
@@ -98,25 +115,27 @@ const AdminLogin = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Mot de passe
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    required
-                    placeholder="••••••••"
-                    className="pl-10"
-                    minLength={6}
-                  />
+              {!isResetPassword && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Mot de passe
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      required
+                      placeholder="••••••••"
+                      className="pl-10"
+                      minLength={6}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button
                 type="submit"
@@ -129,21 +148,39 @@ const AdminLogin = () => {
                 ) : (
                   <>
                     <LogIn className="w-5 h-5 mr-2" />
-                    {isSignUp ? "Créer le compte" : "Se connecter"}
+                    {isResetPassword 
+                      ? "Envoyer le lien" 
+                      : isSignUp 
+                        ? "Créer le compte" 
+                        : "Se connecter"}
                   </>
                 )}
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
+              {!isResetPassword && (
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-sm text-primary hover:underline block w-full"
+                >
+                  {isSignUp
+                    ? "Déjà un compte ? Se connecter"
+                    : "Pas de compte ? Créer un compte"}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-primary hover:underline"
+                onClick={() => {
+                  setIsResetPassword(!isResetPassword);
+                  setIsSignUp(false);
+                }}
+                className="text-sm text-muted-foreground hover:text-primary hover:underline"
               >
-                {isSignUp
-                  ? "Déjà un compte ? Se connecter"
-                  : "Pas de compte ? Créer un compte"}
+                {isResetPassword
+                  ? "Retour à la connexion"
+                  : "Mot de passe oublié ?"}
               </button>
             </div>
           </div>
