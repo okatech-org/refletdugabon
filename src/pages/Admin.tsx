@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ImageUpload from "@/components/admin/ImageUpload";
 import {
   LogOut,
   Package,
@@ -461,11 +462,11 @@ const ProductForm = ({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">URL Image</label>
-          <Input
-            value={form.image_url}
-            onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-            placeholder="https://..."
+          <label className="block text-sm font-medium mb-1">Image</label>
+          <ImageUpload
+            value={form.image_url || ""}
+            onChange={(url) => setForm({ ...form, image_url: url })}
+            folder="products"
           />
         </div>
         <div className="sm:col-span-2">
@@ -535,11 +536,11 @@ const ImageForm = ({
           </select>
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium mb-1">URL Image</label>
-          <Input
-            value={form.image_url}
-            onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-            placeholder="https://..."
+          <label className="block text-sm font-medium mb-1">Image</label>
+          <ImageUpload
+            value={form.image_url || ""}
+            onChange={(url) => setForm({ ...form, image_url: url })}
+            folder="gallery"
           />
         </div>
         <div className="sm:col-span-2">
