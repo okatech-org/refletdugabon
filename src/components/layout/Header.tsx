@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoRefletGabon from "@/assets/logo-reflet-gabon-transparent.png";
 
@@ -49,8 +49,14 @@ export const Header = () => {
           ))}
         </div>
 
-        {/* CTA Button */}
-        <div className="hidden lg:block">
+        {/* CTA Buttons */}
+        <div className="hidden lg:flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/login">
+              <LogIn className="w-4 h-4 mr-2" />
+              Se connecter
+            </Link>
+          </Button>
           <Button asChild className="bg-gradient-primary hover:opacity-90 text-primary-foreground shadow-sm">
             <Link to="/contact">Nous Soutenir</Link>
           </Button>
@@ -87,7 +93,13 @@ export const Header = () => {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-4">
+            <div className="pt-4 space-y-2">
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/admin/login" onClick={() => setMobileMenuOpen(false)}>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Se connecter
+                </Link>
+              </Button>
               <Button asChild className="w-full bg-gradient-primary text-primary-foreground">
                 <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
                   Nous Soutenir
