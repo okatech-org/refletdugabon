@@ -12,6 +12,8 @@ export const HeroSection = () => {
           src={heroImage}
           alt="Terres agricoles au Gabon"
           className="w-full h-full object-cover"
+          loading="eager"
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-transparent" />
       </div>
