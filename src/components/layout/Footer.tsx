@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Facebook, Instagram, Heart } from "lucide-react";
+import logoRefletGabonFooter from "@/assets/logo-reflet-gabon-footer.png";
 
 const quickLinks = [
   { name: "Accueil", href: "/" },
@@ -23,15 +24,13 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand Column */}
           <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center font-bold text-xl">
-                RG
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Reflet du Gabon</h3>
-                <p className="text-sm text-primary-foreground/70">Association Loi 1901</p>
-              </div>
-            </div>
+            <Link to="/" className="block">
+              <img 
+                src={logoRefletGabonFooter} 
+                alt="Reflet du Gabon - Association" 
+                className="h-20 w-auto object-contain"
+              />
+            </Link>
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               Engagés pour l'autonomisation des jeunes et des femmes par l'agriculture durable, 
               la culture et le développement économique solidaire.
