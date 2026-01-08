@@ -17,9 +17,11 @@ import {
   X,
   Save,
   Mail,
+  Users,
+  Shield,
 } from "lucide-react";
 
-type Tab = "products" | "gallery" | "messages";
+type Tab = "products" | "gallery" | "messages" | "users";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -93,6 +95,37 @@ const Admin = () => {
       return data;
     },
   });
+
+  // User roles queries
+  const { data: userRoles, isLoading: rolesLoading, refetch: refetchRoles } = useQuery({
+    queryKey: ["admin-user-roles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Current user check for admin
+  const { data: currentUserRole } = useQuery({
+    queryKey: ["current-user-role"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      if (error) return null;
+      return data?.role;
+    },
+  });
+
+  const isAdmin = currentUserRole === "admin";
 
   // Product mutations
   const saveProductMutation = useMutation({
@@ -209,6 +242,15 @@ const Admin = () => {
             <Mail className="w-4 h-4 mr-2" />
             Messages ({messages?.length || 0})
           </Button>
+          {isAdmin && (
+            <Button
+              variant={activeTab === "users" ? "default" : "outline"}
+              onClick={() => setActiveTab("users")}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Utilisateurs
+            </Button>
+          )}
         </div>
 
         {/* Products Tab */}
@@ -399,6 +441,55 @@ const Admin = () => {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Users Tab - Admin Only */}
+        {activeTab === "users" && isAdmin && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Gestion des utilisateurs</h2>
+            <div className="bg-card border border-border rounded-xl p-6 mb-6">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Utilisateurs avec des rôles
+              </h3>
+              <div className="grid gap-4">
+                {rolesLoading ? (
+                  <p>Chargement...</p>
+                ) : userRoles?.length === 0 ? (
+                  <p className="text-muted-foreground">Aucun utilisateur avec un rôle.</p>
+                ) : (
+                  userRoles?.map((ur: any) => (
+                    <div
+                      key={ur.id}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{ur.user_id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Créé le {new Date(ur.created_at).toLocaleDateString("fr-FR")}
+                        </p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        ur.role === 'admin' 
+                          ? 'bg-primary text-primary-foreground' 
+                          : ur.role === 'moderator'
+                            ? 'bg-secondary text-secondary-foreground'
+                            : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {ur.role}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Note :</strong> Pour ajouter de nouveaux administrateurs, contactez le support technique.
+                Les rôles disponibles sont : admin, moderator, user.
+              </p>
             </div>
           </div>
         )}
