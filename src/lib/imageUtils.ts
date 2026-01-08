@@ -2,7 +2,7 @@
  * Resize image to maximum dimensions while maintaining aspect ratio
  */
 export const resizeImage = (
-  file: File,
+  file: File | Blob,
   maxWidth: number = 1200,
   maxHeight: number = 1200,
   quality: number = 0.85
@@ -33,6 +33,61 @@ export const resizeImage = (
         }
 
         ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Could not create blob"));
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error("Could not load image"));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Create a square thumbnail from an image
+ */
+export const createThumbnail = (
+  file: File | Blob,
+  size: number = 300,
+  quality: number = 0.8
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const { width, height } = img;
+        
+        // Calculate crop dimensions for square thumbnail
+        const minDim = Math.min(width, height);
+        const sx = (width - minDim) / 2;
+        const sy = (height - minDim) / 2;
+
+        // Create canvas
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+
+        // Draw cropped and resized image
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
 
         // Convert to blob
         canvas.toBlob(
