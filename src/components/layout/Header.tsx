@@ -10,7 +10,8 @@ const navigation = [
   { name: "Restaurant", href: "/restaurant" },
   { name: "Culture", href: "/culture" },
   { name: "Coopérative", href: "/cooperative" },
-  { name: "La Présidente", href: "/presidente" },
+  { name: "Galerie", href: "/galerie" },
+  { name: "Boutique", href: "/boutique" },
   { name: "Contact", href: "/contact" },
 ];
 

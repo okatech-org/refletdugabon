@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const contactInfo = [
   {
@@ -55,15 +56,32 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const { error } = await supabase.from("contact_messages").insert({
+        name: formData.lastName,
+        first_name: formData.firstName,
+        email: formData.email,
+        phone: formData.phone || null,
+        subject: formData.subject,
+        message: formData.message,
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Message envoyé !",
-      description: "Nous vous répondrons dans les plus brefs délais.",
-    });
+      if (error) throw error;
+
+      setIsSubmitted(true);
+      toast({
+        title: "Message envoyé !",
+        description: "Nous vous répondrons dans les plus brefs délais.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -135,14 +153,18 @@ const Contact = () => {
                 ))}
               </div>
 
-              {/* Map Placeholder */}
-              <div className="rounded-2xl overflow-hidden border border-border h-64 bg-muted flex items-center justify-center">
-                <div className="text-center p-6">
-                  <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    Verneuil-sur-Avre, Normandie
-                  </p>
-                </div>
+              {/* Google Maps */}
+              <div className="rounded-2xl overflow-hidden border border-border h-64">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d20923.97768426675!2d0.9134076!3d48.7396694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e40d1c93c7d8fb%3A0x40c14484fb94d00!2s27130%20Verneuil%20d&#39;Avre%20et%20d&#39;Iton!5e0!3m2!1sfr!2sfr!4v1704890000000!5m2!1sfr!2sfr"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Localisation Verneuil-sur-Avre"
+                />
               </div>
             </div>
 
