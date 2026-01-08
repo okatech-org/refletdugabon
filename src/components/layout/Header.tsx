@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoRefletGabon from "@/assets/logo-reflet-gabon-transparent.png";
-import iconRefletGabon from "@/assets/icon-reflet-gabon.png";
 
 const navigation = [
   { name: "Accueil", href: "/" },
@@ -24,17 +23,12 @@ export const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass">
       <nav className="section-container flex items-center justify-between py-4">
-        {/* Logo - Icon on mobile, full logo on desktop */}
+        {/* Logo - Full logo on all screens */}
         <Link to="/" className="flex items-center gap-2 group">
-          <img 
-            src={iconRefletGabon} 
-            alt="Reflet du Gabon" 
-            className="h-10 w-auto object-contain lg:hidden"
-          />
           <img 
             src={logoRefletGabon} 
             alt="Reflet du Gabon" 
-            className="h-12 w-auto object-contain hidden lg:block"
+            className="h-10 md:h-12 w-auto object-contain"
           />
         </Link>
 
