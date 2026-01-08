@@ -33,6 +33,7 @@ export const MissionSection = () => {
                 src={farmerImage}
                 alt="Femme agricultrice au Gabon"
                 className="w-full h-[500px] object-cover"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 to-transparent" />
             </div>
