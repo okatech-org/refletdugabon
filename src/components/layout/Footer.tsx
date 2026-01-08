@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Facebook, Instagram, Heart } from "lucide-react";
-import logoRefletGabonFooter from "@/assets/logo-reflet-gabon-footer.png";
+import logoRefletGabonFooter from "@/assets/logo-reflet-gabon-documents.png";
 
 const quickLinks = [
   { name: "Accueil", href: "/" },
