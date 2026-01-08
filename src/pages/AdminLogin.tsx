@@ -11,7 +11,6 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -33,20 +32,6 @@ const AdminLogin = () => {
           description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
         });
         setIsResetPassword(false);
-      } else if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
-        });
-        if (error) throw error;
-        toast({
-          title: "Compte créé !",
-          description: "Vous pouvez maintenant vous connecter.",
-        });
-        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
@@ -82,16 +67,12 @@ const AdminLogin = () => {
               <h1 className="text-2xl font-bold text-foreground">
                 {isResetPassword 
                   ? "Réinitialiser le mot de passe" 
-                  : isSignUp 
-                    ? "Créer un compte" 
-                    : "Administration"}
+                  : "Administration"}
               </h1>
               <p className="text-muted-foreground mt-2">
                 {isResetPassword
                   ? "Entrez votre email pour recevoir un lien de réinitialisation"
-                  : isSignUp
-                    ? "Créez votre compte administrateur"
-                    : "Connectez-vous pour gérer le site"}
+                  : "Connectez-vous pour gérer le site"}
               </p>
             </div>
 
@@ -148,34 +129,16 @@ const AdminLogin = () => {
                 ) : (
                   <>
                     <LogIn className="w-5 h-5 mr-2" />
-                    {isResetPassword 
-                      ? "Envoyer le lien" 
-                      : isSignUp 
-                        ? "Créer le compte" 
-                        : "Se connecter"}
+                    {isResetPassword ? "Envoyer le lien" : "Se connecter"}
                   </>
                 )}
               </Button>
             </form>
 
-            <div className="mt-6 text-center space-y-2">
-              {!isResetPassword && (
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-sm text-primary hover:underline block w-full"
-                >
-                  {isSignUp
-                    ? "Déjà un compte ? Se connecter"
-                    : "Pas de compte ? Créer un compte"}
-                </button>
-              )}
+            <div className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => {
-                  setIsResetPassword(!isResetPassword);
-                  setIsSignUp(false);
-                }}
+                onClick={() => setIsResetPassword(!isResetPassword)}
                 className="text-sm text-muted-foreground hover:text-primary hover:underline"
               >
                 {isResetPassword
