@@ -2,8 +2,10 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { resizeImage } from "@/lib/imageUtils";
+import MediaLibrary from "./MediaLibrary";
 
 interface ImageUploadProps {
   value: string;
@@ -14,6 +16,7 @@ interface ImageUploadProps {
 const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState(value);
+  const [showLibrary, setShowLibrary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -31,11 +34,11 @@ const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps)
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (max 10MB before resize)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Erreur",
-        description: "L'image ne doit pas dépasser 5 Mo",
+        description: "L'image ne doit pas dépasser 10 Mo",
         variant: "destructive",
       });
       return;
@@ -44,14 +47,17 @@ const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps)
     setIsUploading(true);
 
     try {
+      // Resize image for optimization
+      const resizedBlob = await resizeImage(file, 1200, 1200, 0.85);
+      
       // Generate unique filename
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(fileName, file, {
+        .upload(fileName, resizedBlob, {
+          contentType: "image/jpeg",
           cacheControl: "3600",
           upsert: false,
         });
@@ -67,9 +73,12 @@ const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps)
       setPreview(publicUrl);
       onChange(publicUrl);
 
+      const originalSize = (file.size / 1024).toFixed(0);
+      const newSize = (resizedBlob.size / 1024).toFixed(0);
+
       toast({
         title: "Image téléchargée",
-        description: "L'image a été téléchargée avec succès",
+        description: `Optimisée: ${originalSize} Ko → ${newSize} Ko`,
       });
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -91,6 +100,11 @@ const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps)
     }
   };
 
+  const handleLibrarySelect = (url: string) => {
+    setPreview(url);
+    onChange(url);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
@@ -100,14 +114,23 @@ const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps)
             onChange(e.target.value);
             setPreview(e.target.value);
           }}
-          placeholder="URL de l'image ou télécharger..."
+          placeholder="URL de l'image..."
           className="flex-1"
         />
         <Button
           type="button"
           variant="outline"
+          onClick={() => setShowLibrary(true)}
+          title="Bibliothèque média"
+        >
+          <ImageIcon className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
+          title="Télécharger"
         >
           {isUploading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -144,6 +167,13 @@ const ImageUpload = ({ value, onChange, folder = "products" }: ImageUploadProps)
           </Button>
         </div>
       )}
+
+      <MediaLibrary
+        open={showLibrary}
+        onClose={() => setShowLibrary(false)}
+        onSelect={handleLibrarySelect}
+        folder={folder}
+      />
     </div>
   );
 };
