@@ -28,7 +28,7 @@ export const Footer = () => {
               <img 
                 src={logoRefletGabonFooter} 
                 alt="Reflet du Gabon - Association" 
-                className="h-20 w-auto object-contain"
+                className="h-40 w-auto object-contain"
               />
             </Link>
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
