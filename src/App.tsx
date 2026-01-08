@@ -13,6 +13,8 @@ import Presidente from "./pages/Presidente";
 import Projets from "./pages/Projets";
 import Boutique from "./pages/Boutique";
 import Galerie from "./pages/Galerie";
+import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
           <Route path="/projets" element={<Projets />} />
           <Route path="/boutique" element={<Boutique />} />
           <Route path="/galerie" element={<Galerie />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
