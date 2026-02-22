@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Users, Leaf, Target, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSiteContent, getContent } from "@/hooks/useSiteContent";
 import heroImage from "@/assets/hero-agriculture.jpg";
 import farmerImage from "@/assets/farmer-woman.jpg";
 
@@ -13,35 +14,25 @@ const stats = [
 ];
 
 const activities = [
-  {
-    title: "Production Maraîchère",
-    description: "Légumes, fruits et denrées alimentaires de qualité pour les marchés locaux.",
-    icon: Leaf,
-  },
-  {
-    title: "Formation Agricole",
-    description: "Techniques de préparation, semis, entretien et récolte transmises aux bénéficiaires.",
-    icon: Users,
-  },
-  {
-    title: "Développement Durable",
-    description: "Pratiques agroécologiques respectueuses de l'environnement et de la biodiversité.",
-    icon: Target,
-  },
-  {
-    title: "Autonomisation",
-    description: "Création d'emplois et revenus durables pour les jeunes et les femmes.",
-    icon: Heart,
-  },
+  { title: "Production Maraîchère", description: "Légumes, fruits et denrées alimentaires de qualité pour les marchés locaux.", icon: Leaf },
+  { title: "Formation Agricole", description: "Techniques de préparation, semis, entretien et récolte transmises aux bénéficiaires.", icon: Users },
+  { title: "Développement Durable", description: "Pratiques agroécologiques respectueuses de l'environnement et de la biodiversité.", icon: Target },
+  { title: "Autonomisation", description: "Création d'emplois et revenus durables pour les jeunes et les femmes.", icon: Heart },
 ];
 
 const Cooperative = () => {
+  const { data: content } = useSiteContent("cooperative");
+
   return (
     <Layout>
       {/* Hero Section */}
       <section className="relative min-h-[60vh] flex items-center">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="Terres agricoles de Nkoltang" className="w-full h-full object-cover" />
+          <img
+            src={getContent(content, "hero", "image", "") || heroImage}
+            alt="Terres agricoles de Nkoltang"
+            className="w-full h-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-foreground/40" />
         </div>
         <div className="relative section-container py-20">
@@ -51,10 +42,10 @@ const Cooperative = () => {
               <span className="text-primary font-medium">Nkoltang, Gabon</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold mb-6">
-              Coopérative Agricole de Nkoltang
+              {getContent(content, "hero", "title", "Coopérative Agricole de Nkoltang")}
             </h1>
             <p className="text-xl text-primary-foreground/80 mb-8">
-              Agriculture durable pour l'autonomisation des femmes gabonaises.
+              {getContent(content, "hero", "subtitle", "Agriculture durable pour l'autonomisation des femmes gabonaises.")}
             </p>
             <Button asChild size="lg" className="bg-gradient-primary hover:opacity-90 gap-2">
               <Link to="/contact">
@@ -85,18 +76,14 @@ const Cooperative = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-foreground">
-                Transformer des Vies par l'Agriculture
+                {getContent(content, "about", "title", "Transformer des Vies par l'Agriculture")}
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Située à 30 km de Libreville dans la zone péri-urbaine de Nkoltang, notre coopérative 
-                agricole est le cœur de notre mission d'autonomisation. Nous formons les jeunes et les 
-                femmes aux techniques agricoles modernes et durables.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Grâce au partenariat avec l'ONG IDRC AFRICA qui nous a fourni du matériel agricole, 
-                nous développons une production maraîchère de qualité tout en luttant contre la faim, 
-                la malnutrition et la pauvreté en zone rurale.
-              </p>
+              <div
+                className="text-muted-foreground leading-relaxed prose"
+                dangerouslySetInnerHTML={{
+                  __html: getContent(content, "about", "description", "<p>Située à 30 km de Libreville dans la zone péri-urbaine de Nkoltang, notre coopérative agricole est le cœur de notre mission d'autonomisation. Nous formons les jeunes et les femmes aux techniques agricoles modernes et durables.</p><p>Grâce au partenariat avec l'ONG IDRC AFRICA qui nous a fourni du matériel agricole, nous développons une production maraîchère de qualité tout en luttant contre la faim, la malnutrition et la pauvreté en zone rurale.</p>"),
+                }}
+              />
             </div>
             <div className="relative rounded-2xl overflow-hidden">
               <img src={farmerImage} alt="Agricultrice au travail" className="w-full h-[400px] object-cover" />
@@ -110,9 +97,7 @@ const Cooperative = () => {
         <div className="section-container">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <h2 className="text-3xl font-bold text-foreground mb-4">Nos Activités</h2>
-            <p className="text-muted-foreground">
-              De la formation à la production, nous couvrons toute la chaîne de valeur agricole.
-            </p>
+            <p className="text-muted-foreground">De la formation à la production, nous couvrons toute la chaîne de valeur agricole.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {activities.map((activity) => (
@@ -132,10 +117,11 @@ const Cooperative = () => {
       <section className="py-20">
         <div className="section-container">
           <div className="bg-gradient-primary rounded-3xl p-12 text-center text-primary-foreground">
-            <h2 className="text-3xl font-bold mb-4">Soutenez Notre Coopérative</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              {getContent(content, "cta", "title", "Soutenez Notre Coopérative")}
+            </h2>
             <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-              Votre soutien permet de former plus de femmes, d'acquérir du matériel agricole 
-              et de développer nos activités pour un impact encore plus grand.
+              {getContent(content, "cta", "description", "Votre soutien permet de former plus de femmes, d'acquérir du matériel agricole et de développer nos activités pour un impact encore plus grand.")}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">

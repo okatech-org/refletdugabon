@@ -2,11 +2,14 @@ import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sprout, UtensilsCrossed, Music, Users, Leaf, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSiteContent, getContent } from "@/hooks/useSiteContent";
 import farmerImage from "@/assets/farmer-woman.jpg";
 import restaurantImage from "@/assets/restaurant.jpg";
 import culturalImage from "@/assets/cultural-dance.jpg";
 
 const Moyens = () => {
+  const { data: content } = useSiteContent("moyens");
+
   return (
     <Layout>
       {/* Hero */}
@@ -17,12 +20,13 @@ const Moyens = () => {
               Nos Moyens d'Action
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              Trois Piliers pour un{" "}
-              <span className="text-gradient-primary">Impact Durable</span>
+              {getContent(content, "hero", "title", "Trois Piliers pour un")}{" "}
+              <span className="text-gradient-primary">
+                {getContent(content, "hero", "title_highlight", "Impact Durable")}
+              </span>
             </h1>
             <p className="text-muted-foreground text-lg">
-              Découvrez les moyens concrets par lesquels notre association œuvre 
-              pour l'autonomisation des communautés gabonaises.
+              {getContent(content, "hero", "description", "Découvrez les moyens concrets par lesquels notre association œuvre pour l'autonomisation des communautés gabonaises.")}
             </p>
           </div>
         </div>
@@ -41,13 +45,14 @@ const Moyens = () => {
             </div>
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-foreground">
-                Coopérative Agricole à Nkoltang
+                {getContent(content, "cooperative", "title", "Coopérative Agricole à Nkoltang")}
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Située à 30 km de Libreville, notre coopérative agricole forme les jeunes et les femmes 
-                aux techniques agricoles durables : préparation des planches, pépinières, repiquage, 
-                et bien plus encore.
-              </p>
+              <div
+                className="text-muted-foreground leading-relaxed prose"
+                dangerouslySetInnerHTML={{
+                  __html: getContent(content, "cooperative", "description", "<p>Située à 30 km de Libreville, notre coopérative agricole forme les jeunes et les femmes aux techniques agricoles durables : préparation des planches, pépinières, repiquage, et bien plus encore.</p>"),
+                }}
+              />
               <ul className="space-y-3">
                 {["Formation aux techniques agricoles", "Production maraîchère durable", "Création d'emplois locaux", "Partenariat avec l'ONG IDRC AFRICA"].map((item) => (
                   <li key={item} className="flex items-center gap-3">
@@ -72,12 +77,14 @@ const Moyens = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1 space-y-6">
               <h2 className="text-3xl font-bold text-foreground">
-                Restaurant "Les Délices du Gabon"
+                {getContent(content, "restaurant", "title", 'Restaurant "Les Délices du Gabon"')}
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Notre restaurant associatif en Normandie offre une expérience culinaire africaine authentique. 
-                Finaliste du prix "Cuistos Engagés" à Paris en juin 2022, nous promouvons une approche écoresponsable.
-              </p>
+              <div
+                className="text-muted-foreground leading-relaxed prose"
+                dangerouslySetInnerHTML={{
+                  __html: getContent(content, "restaurant", "description", "<p>Notre restaurant associatif en Normandie offre une expérience culinaire africaine authentique. Finaliste du prix \"Cuistos Engagés\" à Paris en juin 2022, nous promouvons une approche écoresponsable.</p>"),
+                }}
+              />
               <ul className="space-y-3">
                 {["Gastronomie africaine authentique", "Approche écoresponsable", "Lieu de partage culturel", "Prix Cuistos Engagés 2022"].map((item) => (
                   <li key={item} className="flex items-center gap-3">
@@ -116,12 +123,14 @@ const Moyens = () => {
             </div>
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-foreground">
-                Groupe Culturel
+                {getContent(content, "culture", "title", "Groupe Culturel")}
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Nos ambassadeurs culturels valorisent le patrimoine gabonais à travers des spectacles 
-                de danses traditionnelles, des prestations musicales et des animations culturelles.
-              </p>
+              <div
+                className="text-muted-foreground leading-relaxed prose"
+                dangerouslySetInnerHTML={{
+                  __html: getContent(content, "culture", "description", "<p>Nos ambassadeurs culturels valorisent le patrimoine gabonais à travers des spectacles de danses traditionnelles, des prestations musicales et des animations culturelles.</p>"),
+                }}
+              />
               <ul className="space-y-3">
                 {["Danses traditionnelles gabonaises", "Prestations musicales", "Ateliers culturels éducatifs", "Animations pour événements"].map((item) => (
                   <li key={item} className="flex items-center gap-3">
