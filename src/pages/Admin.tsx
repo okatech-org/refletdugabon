@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ImageUpload from "@/components/admin/ImageUpload";
+import ContentEditor from "@/components/admin/ContentEditor";
+import { PAGE_CONTENT_STRUCTURE } from "@/hooks/useSiteContent";
 import {
   LogOut,
   Package,
@@ -19,19 +21,21 @@ import {
   Mail,
   Users,
   Shield,
+  FileText,
 } from "lucide-react";
 
-type Tab = "products" | "gallery" | "messages" | "users";
+type Tab = "content" | "products" | "gallery" | "messages" | "users";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<Tab>("products");
+  const [activeTab, setActiveTab] = useState<Tab>("content");
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingImage, setEditingImage] = useState<any>(null);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showImageForm, setShowImageForm] = useState(false);
+  const [activeContentPage, setActiveContentPage] = useState("accueil");
 
   // Check auth
   useEffect(() => {
@@ -97,7 +101,7 @@ const Admin = () => {
   });
 
   // User roles queries
-  const { data: userRoles, isLoading: rolesLoading, refetch: refetchRoles } = useQuery({
+  const { data: userRoles, isLoading: rolesLoading } = useQuery({
     queryKey: ["admin-user-roles"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -109,7 +113,6 @@ const Admin = () => {
     },
   });
 
-  // Current user check for admin
   const { data: currentUserRole } = useQuery({
     queryKey: ["current-user-role"],
     queryFn: async () => {
@@ -220,7 +223,14 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Tabs */}
-        <div className="flex gap-2 mb-8">
+        <div className="flex flex-wrap gap-2 mb-8">
+          <Button
+            variant={activeTab === "content" ? "default" : "outline"}
+            onClick={() => setActiveTab("content")}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Contenu
+          </Button>
           <Button
             variant={activeTab === "products" ? "default" : "outline"}
             onClick={() => setActiveTab("products")}
@@ -252,6 +262,34 @@ const Admin = () => {
             </Button>
           )}
         </div>
+
+        {/* Content Tab */}
+        {activeTab === "content" && (
+          <div className="grid lg:grid-cols-[200px_1fr] gap-6">
+            {/* Page selector sidebar */}
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">
+                Pages
+              </p>
+              {Object.entries(PAGE_CONTENT_STRUCTURE).map(([key, config]) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveContentPage(key)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeContentPage === key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {config.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Content editor */}
+            <ContentEditor key={activeContentPage} pageKey={activeContentPage} />
+          </div>
+        )}
 
         {/* Products Tab */}
         {activeTab === "products" && (
@@ -445,7 +483,7 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Users Tab - Admin Only */}
+        {/* Users Tab */}
         {activeTab === "users" && isAdmin && (
           <div>
             <h2 className="text-2xl font-bold mb-6">Gestion des utilisateurs</h2>

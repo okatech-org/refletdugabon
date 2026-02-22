@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Target, Heart, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSiteContent, getContent } from "@/hooks/useSiteContent";
 import farmerImage from "@/assets/farmer-woman.jpg";
 
-const values = [
+const defaultValues = [
   {
     icon: Target,
     title: "Notre Mission",
@@ -22,15 +23,29 @@ const values = [
 ];
 
 export const MissionSection = () => {
+  const { data: content } = useSiteContent("accueil");
+
+  const badge = getContent(content, "mission", "badge", "Qui Sommes-Nous");
+  const title = getContent(content, "mission", "title", "Une Association au Service du");
+  const titleHighlight = getContent(content, "mission", "title_highlight", "Développement Durable");
+  const description = getContent(
+    content,
+    "mission",
+    "description",
+    "Reflet du Gabon est une association loi 1901 basée en Normandie, France. Nous agissons pour l'autonomisation des jeunes et des femmes, principalement par l'agriculture, le développement durable, l'écotourisme et des activités économiques et culturelles entre la France et le Gabon."
+  );
+  const image = getContent(content, "mission", "image", "") || farmerImage;
+  const floatingValue = getContent(content, "mission", "floating_value", "30 km");
+  const floatingText = getContent(content, "mission", "floating_text", "De Libreville, notre site agricole de Nkoltang transforme des vies.");
+
   return (
     <section className="py-24">
       <div className="section-container">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Image Side */}
           <div className="relative">
             <div className="relative rounded-2xl overflow-hidden">
               <img
-                src={farmerImage}
+                src={image}
                 alt="Femme agricultrice au Gabon"
                 className="w-full h-[500px] object-cover"
                 loading="lazy"
@@ -38,39 +53,31 @@ export const MissionSection = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 to-transparent" />
             </div>
 
-            {/* Floating Card */}
             <div className="absolute -bottom-6 -right-6 bg-card p-6 rounded-2xl shadow-elevated max-w-xs border border-border">
-              <p className="text-3xl font-bold text-primary mb-2">30 km</p>
-              <p className="text-muted-foreground text-sm">
-                De Libreville, notre site agricole de Nkoltang transforme des vies.
-              </p>
+              <p className="text-3xl font-bold text-primary mb-2">{floatingValue}</p>
+              <p className="text-muted-foreground text-sm">{floatingText}</p>
             </div>
 
-            {/* Decorative */}
             <div className="absolute -top-6 -left-6 w-24 h-24 bg-accent/20 rounded-full blur-2xl" />
           </div>
 
-          {/* Content Side */}
           <div className="space-y-8">
             <div>
               <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                Qui Sommes-Nous
+                {badge}
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-                Une Association au Service du{" "}
-                <span className="text-gradient-primary">Développement Durable</span>
+                {title}{" "}
+                <span className="text-gradient-primary">{titleHighlight}</span>
               </h2>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                Reflet du Gabon est une association loi 1901 basée en Normandie, France. 
-                Nous agissons pour l'autonomisation des jeunes et des femmes, principalement 
-                par l'agriculture, le développement durable, l'écotourisme et des activités 
-                économiques et culturelles entre la France et le Gabon.
-              </p>
+              <div
+                className="text-muted-foreground text-lg leading-relaxed prose prose-lg max-w-none"
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
             </div>
 
-            {/* Values */}
             <div className="space-y-4">
-              {values.map((value) => (
+              {defaultValues.map((value) => (
                 <div
                   key={value.title}
                   className="flex gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
