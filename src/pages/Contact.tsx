@@ -6,26 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent, getContent } from "@/hooks/useSiteContent";
 
-const contactInfo = [
-  {
-    icon: MapPin,
-    title: "Adresse",
-    content: "Verneuil-sur-Avre, Normandie, France",
-    link: null,
-  },
-  {
-    icon: Phone,
-    title: "Téléphone",
-    content: "+33 6 81 65 78 70",
-    link: "tel:+33681657870",
-  },
-  {
-    icon: Mail,
-    title: "Email",
-    content: "assorefletdugabon@yahoo.com",
-    link: "mailto:assorefletdugabon@yahoo.com",
-  },
+const defaultContactInfo = [
+  { icon: MapPin, title: "Adresse", contentKey: "address", defaultValue: "Verneuil-sur-Avre, Normandie, France", linkPrefix: null },
+  { icon: Phone, title: "Téléphone", contentKey: "phone", defaultValue: "+33 6 81 65 78 70", linkPrefix: "tel:" },
+  { icon: Mail, title: "Email", contentKey: "email", defaultValue: "assorefletdugabon@yahoo.com", linkPrefix: "mailto:" },
 ];
 
 const subjects = [
@@ -40,6 +26,7 @@ const subjects = [
 
 const Contact = () => {
   const { toast } = useToast();
+  const { data: content } = useSiteContent("contact");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
@@ -104,12 +91,13 @@ const Contact = () => {
               Contact
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              Parlons de Votre{" "}
-              <span className="text-gradient-primary">Engagement</span>
+              {getContent(content, "hero", "title", "Parlons de Votre")}{" "}
+              <span className="text-gradient-primary">
+                {getContent(content, "hero", "title_highlight", "Engagement")}
+              </span>
             </h1>
             <p className="text-muted-foreground text-lg">
-              Une question, une idée de partenariat ou envie de nous rejoindre ? 
-              Notre équipe est à votre écoute.
+              {getContent(content, "hero", "description", "Une question, une idée de partenariat ou envie de nous rejoindre ? Notre équipe est à votre écoute.")}
             </p>
           </div>
         </div>
@@ -131,26 +119,27 @@ const Contact = () => {
               </div>
 
               <div className="space-y-6">
-                {contactInfo.map((info) => (
-                  <div key={info.title} className="flex gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <info.icon className="w-6 h-6 text-primary" />
+                {defaultContactInfo.map((info) => {
+                  const value = getContent(content, "info", info.contentKey, info.defaultValue);
+                  const link = info.linkPrefix ? `${info.linkPrefix}${value.replace(/\s/g, "")}` : null;
+                  return (
+                    <div key={info.title} className="flex gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <info.icon className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{info.title}</p>
+                        {link ? (
+                          <a href={link} className="text-muted-foreground hover:text-primary transition-colors">
+                            {value}
+                          </a>
+                        ) : (
+                          <p className="text-muted-foreground">{value}</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">{info.title}</p>
-                      {info.link ? (
-                        <a
-                          href={info.link}
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          {info.content}
-                        </a>
-                      ) : (
-                        <p className="text-muted-foreground">{info.content}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Google Maps */}
