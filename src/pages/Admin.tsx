@@ -28,14 +28,19 @@ import {
   Menu,
   ChevronLeft,
   FolderOpen,
+  Eye,
+  EyeOff,
+  Settings,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
 
-type Tab = "content" | "media" | "products" | "gallery" | "messages" | "users" | "projects";
+type Tab = "content" | "media" | "products" | "gallery" | "messages" | "users" | "projects" | "pages";
 
 const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { key: "content", label: "Contenu", icon: <FileText className="w-5 h-5" /> },
   { key: "media", label: "Médias", icon: <ImageIcon className="w-5 h-5" /> },
+  { key: "pages", label: "Pages", icon: <Settings className="w-5 h-5" /> },
   { key: "products", label: "Produits", icon: <Package className="w-5 h-5" /> },
   { key: "projects", label: "Projets", icon: <FolderOpen className="w-5 h-5" /> },
   { key: "gallery", label: "Galerie", icon: <Image className="w-5 h-5" /> },
@@ -130,6 +135,15 @@ const Admin = () => {
     queryKey: ["admin-projects"],
     queryFn: async () => {
       const { data, error } = await supabase.from("projects").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: pageSettings, isLoading: pagesLoading } = useQuery({
+    queryKey: ["admin-page-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("page_settings").select("*").order("sort_order", { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -375,6 +389,35 @@ const Admin = () => {
                 </div>
               </div>
               <ContentEditor key={activeContentPage} pageKey={activeContentPage} />
+            </div>
+          )}
+
+          {activeTab === "pages" && (
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Visibilité des pages</h2>
+              <p className="text-muted-foreground text-sm mb-6">Activez ou désactivez les pages visibles dans la navigation du site.</p>
+              <div className="grid gap-3">
+                {pagesLoading ? <p>Chargement...</p> : pageSettings?.map((page) => (
+                  <div key={page.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {page.is_visible ? <Eye className="w-5 h-5 text-primary" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
+                      <div>
+                        <p className="font-medium">{page.page_label}</p>
+                        <p className="text-sm text-muted-foreground">{page.href}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={page.is_visible}
+                      onCheckedChange={async (checked) => {
+                        await supabase.from("page_settings").update({ is_visible: checked }).eq("id", page.id);
+                        queryClient.invalidateQueries({ queryKey: ["admin-page-settings"] });
+                        queryClient.invalidateQueries({ queryKey: ["page-settings"] });
+                        toast({ title: checked ? `${page.page_label} activée` : `${page.page_label} masquée` });
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
