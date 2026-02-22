@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ImageUpload from "@/components/admin/ImageUpload";
 import ContentEditor from "@/components/admin/ContentEditor";
 import MediaManager from "@/components/admin/MediaManager";
-import { PAGE_CONTENT_STRUCTURE } from "@/hooks/useSiteContent";
+import { PAGE_CONTENT_STRUCTURE, useToggleSectionVisibility, useSiteContent, isSectionVisible } from "@/hooks/useSiteContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   LogOut,
@@ -391,32 +391,7 @@ const Admin = () => {
           )}
 
           {activeTab === "pages" && (
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Visibilité des pages</h2>
-              <p className="text-muted-foreground text-sm mb-6">Activez ou désactivez les pages visibles dans la navigation du site.</p>
-              <div className="grid gap-3">
-                {pagesLoading ? <p>Chargement...</p> : pageSettings?.map((page) => (
-                  <div key={page.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {page.is_visible ? <Eye className="w-5 h-5 text-primary" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
-                      <div>
-                        <p className="font-medium">{page.page_label}</p>
-                        <p className="text-sm text-muted-foreground">{page.href}</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={page.is_visible}
-                      onCheckedChange={async (checked) => {
-                        await supabase.from("page_settings").update({ is_visible: checked }).eq("id", page.id);
-                        queryClient.invalidateQueries({ queryKey: ["admin-page-settings"] });
-                        queryClient.invalidateQueries({ queryKey: ["page-settings"] });
-                        toast({ title: checked ? `${page.page_label} activée` : `${page.page_label} masquée` });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+            <PagesVisibilityManager queryClient={queryClient} toast={toast} pageSettings={pageSettings} pagesLoading={pagesLoading} />
           )}
 
           {activeTab === "media" && <MediaManager />}
@@ -569,6 +544,93 @@ const Admin = () => {
           )}
         </div>
       </main>
+    </div>
+  );
+};
+
+// Pages & Sections Visibility Manager
+const PagesVisibilityManager = ({ queryClient, toast, pageSettings, pagesLoading }: { queryClient: any; toast: any; pageSettings: any; pagesLoading: boolean }) => {
+  const [expandedPage, setExpandedPage] = useState<string | null>(null);
+  const toggleVisibility = useToggleSectionVisibility();
+
+  // Build a map of page_key -> content for section visibility
+  const pageKeys = Object.keys(PAGE_CONTENT_STRUCTURE);
+  const contentQueries: Record<string, any> = {};
+  pageKeys.forEach((pk) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data } = useSiteContent(pk);
+    contentQueries[pk] = data;
+  });
+
+  return (
+    <div>
+      <h2 className="text-xl sm:text-2xl font-bold mb-2">Visibilité des pages & sections</h2>
+      <p className="text-muted-foreground text-sm mb-6">Activez ou désactivez les pages et leurs sections individuelles.</p>
+      <div className="grid gap-3">
+        {pagesLoading ? <p>Chargement...</p> : pageSettings?.map((page: any) => {
+          const pageConfig = PAGE_CONTENT_STRUCTURE[page.page_key];
+          const contentData = contentQueries[page.page_key];
+          return (
+            <div key={page.id} className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="p-4 flex items-center justify-between">
+                <div
+                  className="flex items-center gap-3 cursor-pointer flex-1"
+                  onClick={() => setExpandedPage(expandedPage === page.page_key ? null : page.page_key)}
+                >
+                  {page.is_visible ? <Eye className="w-5 h-5 text-primary" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
+                  <div>
+                    <p className="font-medium">{page.page_label}</p>
+                    <p className="text-sm text-muted-foreground">{page.href}</p>
+                  </div>
+                  {pageConfig && (
+                    <ChevronLeft className={`w-4 h-4 text-muted-foreground ml-auto transition-transform ${expandedPage === page.page_key ? "-rotate-90" : ""}`} />
+                  )}
+                </div>
+                <Switch
+                  checked={page.is_visible}
+                  onCheckedChange={async (checked: boolean) => {
+                    await supabase.from("page_settings").update({ is_visible: checked }).eq("id", page.id);
+                    queryClient.invalidateQueries({ queryKey: ["admin-page-settings"] });
+                    queryClient.invalidateQueries({ queryKey: ["page-settings"] });
+                    toast({ title: checked ? `${page.page_label} activée` : `${page.page_label} masquée` });
+                  }}
+                />
+              </div>
+              {/* Section toggles */}
+              {expandedPage === page.page_key && pageConfig && (
+                <div className="border-t border-border bg-muted/30 p-4 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Sections</p>
+                  {Object.entries(pageConfig.sections).map(([sectionKey, section]) => {
+                    const visible = isSectionVisible(contentData, sectionKey);
+                    return (
+                      <div key={sectionKey} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50">
+                        <div className="flex items-center gap-2">
+                          {visible ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                          <span className="text-sm">{section.label}</span>
+                        </div>
+                        <Switch
+                          checked={visible}
+                          onCheckedChange={(checked: boolean) => {
+                            toggleVisibility.mutate(
+                              { page: page.page_key, section: sectionKey, visible: checked },
+                              {
+                                onSuccess: () => {
+                                  queryClient.invalidateQueries({ queryKey: ["site-content", page.page_key] });
+                                  toast({ title: checked ? `${section.label} visible` : `${section.label} masquée` });
+                                },
+                              }
+                            );
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

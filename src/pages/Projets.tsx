@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { Calendar, ArrowRight, Sprout, Award, Package, Users, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSiteContent, getContent } from "@/hooks/useSiteContent";
+import { useSiteContent, getContent, isSectionVisible } from "@/hooks/useSiteContent";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,24 +29,26 @@ const Projets = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="pt-24 pb-12 bg-gradient-hero">
-        <div className="section-container">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              Nos Réalisations
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              {getContent(content, "hero", "title", "Activités et")}{" "}
-              <span className="text-gradient-primary">
-                {getContent(content, "hero", "title_highlight", "Projets Récents")}
+      {isSectionVisible(content, "hero") && (
+        <section className="pt-24 pb-12 bg-gradient-hero">
+          <div className="section-container">
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                Nos Réalisations
               </span>
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              {getContent(content, "hero", "description", "Suivez nos actualités et découvrez l'impact concret de nos actions sur le terrain au Gabon et en France.")}
-            </p>
+              <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
+                {getContent(content, "hero", "title", "Activités et")}{" "}
+                <span className="text-gradient-primary">
+                  {getContent(content, "hero", "title_highlight", "Projets Récents")}
+                </span>
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                {getContent(content, "hero", "description", "Suivez nos actualités et découvrez l'impact concret de nos actions sur le terrain au Gabon et en France.")}
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Projects List */}
       <section className="py-20">
@@ -104,16 +106,18 @@ const Projets = () => {
           </div>
 
           {/* CTA */}
-          <div className="text-center mt-16">
-            <p className="text-muted-foreground mb-6">
-              Vous souhaitez contribuer à nos prochains projets ?
-            </p>
-            <Button asChild className="bg-gradient-primary hover:opacity-90 gap-2">
-              <Link to="/contact">
-                Nous soutenir <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-          </div>
+          {isSectionVisible(content, "cta") && (
+            <div className="text-center mt-16">
+              <p className="text-muted-foreground mb-6">
+                {getContent(content, "cta", "text", "Vous souhaitez contribuer à nos prochains projets ?")}
+              </p>
+              <Button asChild className="bg-gradient-primary hover:opacity-90 gap-2">
+                <Link to="/contact">
+                  Nous soutenir <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </section>
     </Layout>

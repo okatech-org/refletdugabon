@@ -3,93 +3,21 @@ import { Layout } from "@/components/layout/Layout";
 import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent, getContent, isSectionVisible } from "@/hooks/useSiteContent";
 
-// Initial gallery images (to be replaced with database images when available)
 const defaultGalleryImages = [
-  {
-    id: "1",
-    title: "Terres agricoles de Nkoltang",
-    description: "Vue panoramique du site agricole",
-    image_url: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800",
-    category: "agriculture",
-  },
-  {
-    id: "2",
-    title: "Récolte des légumes",
-    description: "Les bénéficiaires récoltent les produits",
-    image_url: "https://images.unsplash.com/photo-1592419044706-39796d40f98c?w=800",
-    category: "agriculture",
-  },
-  {
-    id: "3",
-    title: "Formation agricole",
-    description: "Séance de formation sur les techniques de culture",
-    image_url: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800",
-    category: "agriculture",
-  },
-  {
-    id: "4",
-    title: "Danse traditionnelle",
-    description: "Spectacle de danse gabonaise",
-    image_url: "https://images.unsplash.com/photo-1545959570-a94084071b5d?w=800",
-    category: "culture",
-  },
-  {
-    id: "5",
-    title: "Festival culturel",
-    description: "Performance lors d'un festival local",
-    image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800",
-    category: "culture",
-  },
-  {
-    id: "6",
-    title: "Instruments traditionnels",
-    description: "Musiciens jouant des instruments gabonais",
-    image_url: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
-    category: "culture",
-  },
-  {
-    id: "7",
-    title: "Restaurant Les Délices du Gabon",
-    description: "Ambiance chaleureuse du restaurant",
-    image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
-    category: "restaurant",
-  },
-  {
-    id: "8",
-    title: "Plat signature",
-    description: "Cuisine gabonaise traditionnelle",
-    image_url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800",
-    category: "restaurant",
-  },
-  {
-    id: "9",
-    title: "Équipe de cuisiniers",
-    description: "Notre équipe en action",
-    image_url: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800",
-    category: "restaurant",
-  },
-  {
-    id: "10",
-    title: "Travail communautaire",
-    description: "Les femmes préparent les semis",
-    image_url: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800",
-    category: "agriculture",
-  },
-  {
-    id: "11",
-    title: "Marché local",
-    description: "Vente des produits de la coopérative",
-    image_url: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800",
-    category: "agriculture",
-  },
-  {
-    id: "12",
-    title: "Célébration culturelle",
-    description: "Fête traditionnelle gabonaise",
-    image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
-    category: "culture",
-  },
+  { id: "1", title: "Terres agricoles de Nkoltang", description: "Vue panoramique du site agricole", image_url: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800", category: "agriculture" },
+  { id: "2", title: "Récolte des légumes", description: "Les bénéficiaires récoltent les produits", image_url: "https://images.unsplash.com/photo-1592419044706-39796d40f98c?w=800", category: "agriculture" },
+  { id: "3", title: "Formation agricole", description: "Séance de formation sur les techniques de culture", image_url: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800", category: "agriculture" },
+  { id: "4", title: "Danse traditionnelle", description: "Spectacle de danse gabonaise", image_url: "https://images.unsplash.com/photo-1545959570-a94084071b5d?w=800", category: "culture" },
+  { id: "5", title: "Festival culturel", description: "Performance lors d'un festival local", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", category: "culture" },
+  { id: "6", title: "Instruments traditionnels", description: "Musiciens jouant des instruments gabonais", image_url: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800", category: "culture" },
+  { id: "7", title: "Restaurant Les Délices du Gabon", description: "Ambiance chaleureuse du restaurant", image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800", category: "restaurant" },
+  { id: "8", title: "Plat signature", description: "Cuisine gabonaise traditionnelle", image_url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800", category: "restaurant" },
+  { id: "9", title: "Équipe de cuisiniers", description: "Notre équipe en action", image_url: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800", category: "restaurant" },
+  { id: "10", title: "Travail communautaire", description: "Les femmes préparent les semis", image_url: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800", category: "agriculture" },
+  { id: "11", title: "Marché local", description: "Vente des produits de la coopérative", image_url: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800", category: "agriculture" },
+  { id: "12", title: "Célébration culturelle", description: "Fête traditionnelle gabonaise", image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800", category: "culture" },
 ];
 
 const categories = [
@@ -100,6 +28,7 @@ const categories = [
 ];
 
 const Galerie = () => {
+  const { data: content } = useSiteContent("galerie");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -110,13 +39,11 @@ const Galerie = () => {
         .from("gallery_images")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return data;
     },
   });
 
-  // Use database images if available, otherwise use defaults
   const galleryImages = dbImages && dbImages.length > 0 ? dbImages : defaultGalleryImages;
 
   const filteredImages = galleryImages.filter(
@@ -138,24 +65,27 @@ const Galerie = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="pt-24 pb-12 bg-gradient-hero">
-        <div className="section-container">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              Galerie Photos
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              Nos{" "}
-              <span className="text-gradient-primary">Moments</span>{" "}
-              en Images
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Découvrez en images nos activités agricoles à Nkoltang, nos événements culturels 
-              et l'ambiance du restaurant "Les Délices du Gabon".
-            </p>
+      {isSectionVisible(content, "hero") && (
+        <section className="pt-24 pb-12 bg-gradient-hero">
+          <div className="section-container">
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                {getContent(content, "hero", "badge", "Galerie Photos")}
+              </span>
+              <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
+                {getContent(content, "hero", "title", "Nos")}{" "}
+                <span className="text-gradient-primary">
+                  {getContent(content, "hero", "title_highlight", "Moments")}
+                </span>{" "}
+                {getContent(content, "hero", "title_suffix", "en Images")}
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                {getContent(content, "hero", "description", "Découvrez en images nos activités agricoles à Nkoltang, nos événements culturels et l'ambiance du restaurant \\\"Les Délices du Gabon\\\".")}
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Categories Filter */}
       <section className="py-8 border-b border-border bg-card/50 sticky top-16 z-30">
