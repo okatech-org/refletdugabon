@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { Calendar, ArrowRight, Sprout, Award, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSiteContent, getContent } from "@/hooks/useSiteContent";
 
 const projects = [
   {
@@ -34,6 +35,8 @@ const projects = [
 ];
 
 const Projets = () => {
+  const { data: content } = useSiteContent("projets");
+
   return (
     <Layout>
       {/* Hero */}
@@ -44,12 +47,13 @@ const Projets = () => {
               Nos Réalisations
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              Activités et{" "}
-              <span className="text-gradient-primary">Projets Récents</span>
+              {getContent(content, "hero", "title", "Activités et")}{" "}
+              <span className="text-gradient-primary">
+                {getContent(content, "hero", "title_highlight", "Projets Récents")}
+              </span>
             </h1>
             <p className="text-muted-foreground text-lg">
-              Suivez nos actualités et découvrez l'impact concret de nos actions 
-              sur le terrain au Gabon et en France.
+              {getContent(content, "hero", "description", "Suivez nos actualités et découvrez l'impact concret de nos actions sur le terrain au Gabon et en France.")}
             </p>
           </div>
         </div>
