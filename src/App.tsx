@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import Contact from "./pages/Contact";
 import Moyens from "./pages/Moyens";
 import Cooperative from "./pages/Cooperative";
-import Restaurant from "./pages/Restaurant";
+
 import Culture from "./pages/Culture";
 import Presidente from "./pages/Presidente";
 import Projets from "./pages/Projets";
@@ -32,7 +32,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/moyens" element={<Moyens />} />
           <Route path="/cooperative" element={<Cooperative />} />
-          <Route path="/restaurant" element={<Restaurant />} />
+          
           <Route path="/culture" element={<Culture />} />
           <Route path="/presidente" element={<Presidente />} />
           <Route path="/projets" element={<Projets />} />

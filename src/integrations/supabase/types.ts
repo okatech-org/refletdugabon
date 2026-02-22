@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      page_settings: {
+        Row: {
+          href: string
+          id: string
+          is_visible: boolean
+          nav_label: string
+          page_key: string
+          page_label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          href: string
+          id?: string
+          is_visible?: boolean
+          nav_label: string
+          page_key: string
+          page_label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          href?: string
+          id?: string
+          is_visible?: boolean
+          nav_label?: string
+          page_key?: string
+          page_label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string

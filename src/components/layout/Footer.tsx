@@ -1,15 +1,7 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Facebook, Instagram, Heart } from "lucide-react";
+import { useVisiblePages } from "@/hooks/usePageSettings";
 import logoRefletGabonFooter from "@/assets/logo-reflet-gabon-documents.png";
-
-const quickLinks = [
-  { name: "Accueil", href: "/" },
-  { name: "Nos Moyens", href: "/moyens" },
-  { name: "Projets Récents", href: "/projets" },
-  { name: "Notre Restaurant", href: "/restaurant" },
-  { name: "Groupe Culturel", href: "/culture" },
-  { name: "Coopérative Agricole", href: "/cooperative" },
-];
 
 const legalLinks = [
   { name: "Mentions Légales", href: "/mentions-legales" },
@@ -17,6 +9,13 @@ const legalLinks = [
 ];
 
 export const Footer = () => {
+  const { data: visiblePages } = useVisiblePages();
+
+  const quickLinks = visiblePages
+    ?.filter((p) => p.page_key !== "accueil")
+    ?.slice(0, 6)
+    ?.map((p) => ({ name: p.nav_label, href: p.href })) || [];
+
   return (
     <footer className="bg-foreground text-primary-foreground">
       {/* Main Footer */}

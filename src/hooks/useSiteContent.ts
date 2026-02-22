@@ -211,35 +211,6 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       },
     },
   },
-  restaurant: {
-    label: "Restaurant",
-    sections: {
-      hero: {
-        label: "Section Héro",
-        fields: [
-          { key: "badge", label: "Badge", type: "text", defaultValue: "Restaurant" },
-          { key: "title", label: "Titre", type: "text", defaultValue: "Les Délices du Gabon" },
-          { key: "subtitle", label: "Sous-titre", type: "text", defaultValue: "Une cuisine authentique gabonaise au cœur de la Normandie" },
-          { key: "image", label: "Image de fond", type: "image", defaultValue: restaurantImage },
-        ],
-      },
-      about: {
-        label: "Section À propos",
-        fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Notre Restaurant" },
-          { key: "description", label: "Description", type: "rich_text" },
-        ],
-      },
-      contact: {
-        label: "Informations de contact",
-        fields: [
-          { key: "address", label: "Adresse", type: "text", defaultValue: "Rouen, Normandie" },
-          { key: "phone", label: "Téléphone", type: "text", defaultValue: "+33 6 XX XX XX XX" },
-          { key: "hours", label: "Horaires", type: "text", defaultValue: "Mar-Sam : 11h-22h" },
-        ],
-      },
-    },
-  },
   moyens: {
     label: "Nos Moyens",
     sections: {

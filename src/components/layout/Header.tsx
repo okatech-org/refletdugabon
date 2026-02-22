@@ -3,25 +3,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useVisiblePages } from "@/hooks/usePageSettings";
 import logoRefletGabon from "@/assets/logo-reflet-gabon-transparent.png";
-
-const navigation = [
-  { name: "Accueil", href: "/" },
-  { name: "Nos Moyens", href: "/moyens" },
-  { name: "Projets", href: "/projets" },
-  { name: "Restaurant", href: "/restaurant" },
-  { name: "Culture", href: "/culture" },
-  { name: "Coopérative", href: "/cooperative" },
-  { name: "Galerie", href: "/galerie" },
-  { name: "Boutique", href: "/boutique" },
-  { name: "Contact", href: "/contact" },
-];
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: visiblePages } = useVisiblePages();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -38,6 +28,8 @@ export const Header = () => {
     setUser(null);
     navigate("/");
   };
+
+  const navigation = visiblePages?.map((p) => ({ name: p.nav_label, href: p.href })) || [];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass">
