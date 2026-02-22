@@ -341,4 +341,37 @@ export const PAGE_CONTENT_STRUCTURE: Record<
       },
     },
   },
+  presidente: {
+    label: "Présidente",
+    sections: {
+      hero: {
+        label: "Section Héro",
+        fields: [
+          { key: "badge", label: "Badge", type: "text" },
+          { key: "title", label: "Titre", type: "text" },
+          { key: "title_highlight", label: "Titre (partie colorée)", type: "text" },
+        ],
+      },
+      message: {
+        label: "Message de la Présidente",
+        fields: [
+          { key: "content", label: "Contenu du message", type: "rich_text" },
+        ],
+      },
+      signature: {
+        label: "Signature",
+        fields: [
+          { key: "closing", label: "Formule de conclusion", type: "text" },
+          { key: "name", label: "Nom", type: "text" },
+          { key: "title", label: "Titre / Fonction", type: "text" },
+        ],
+      },
+      cta: {
+        label: "Appel à l'action",
+        fields: [
+          { key: "text", label: "Texte", type: "text" },
+        ],
+      },
+    },
+  },
 };

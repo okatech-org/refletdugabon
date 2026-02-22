@@ -10,6 +10,7 @@ import ImageUpload from "@/components/admin/ImageUpload";
 import ContentEditor from "@/components/admin/ContentEditor";
 import MediaManager from "@/components/admin/MediaManager";
 import { PAGE_CONTENT_STRUCTURE } from "@/hooks/useSiteContent";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   LogOut,
   Package,
@@ -27,6 +28,7 @@ import {
   Menu,
   ChevronLeft,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type Tab = "content" | "media" | "products" | "gallery" | "messages" | "users";
 
@@ -43,6 +45,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<Tab>("content");
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingImage, setEditingImage] = useState<any>(null);
@@ -50,15 +53,15 @@ const Admin = () => {
   const [showImageForm, setShowImageForm] = useState(false);
   const [activeContentPage, setActiveContentPage] = useState("accueil");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Check auth
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) navigate("/admin/login");
     };
     checkAuth();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       if (!session) navigate("/admin/login");
     });
     return () => subscription.unsubscribe();
@@ -119,15 +122,15 @@ const Admin = () => {
 
   const isAdmin = currentUserRole === "admin";
 
-  // Product mutations
+  // Mutations
   const saveProductMutation = useMutation({
     mutationFn: async (product: any) => {
       if (product.id) {
         const { error } = await supabase.from("products").update(product).eq("id", product.id);
         if (error) throw error;
       } else {
-        const { id, ...productData } = product;
-        const { error } = await supabase.from("products").insert(productData);
+        const { id, ...d } = product;
+        const { error } = await supabase.from("products").insert(d);
         if (error) throw error;
       }
     },
@@ -138,9 +141,7 @@ const Admin = () => {
       setShowProductForm(false);
       toast({ title: "Produit enregistré !" });
     },
-    onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    },
+    onError: (error: any) => toast({ title: "Erreur", description: error.message, variant: "destructive" }),
   });
 
   const deleteProductMutation = useMutation({
@@ -155,15 +156,14 @@ const Admin = () => {
     },
   });
 
-  // Gallery mutations
   const saveImageMutation = useMutation({
     mutationFn: async (image: any) => {
       if (image.id) {
         const { error } = await supabase.from("gallery_images").update(image).eq("id", image.id);
         if (error) throw error;
       } else {
-        const { id, ...imageData } = image;
-        const { error } = await supabase.from("gallery_images").insert(imageData);
+        const { id, ...d } = image;
+        const { error } = await supabase.from("gallery_images").insert(d);
         if (error) throw error;
       }
     },
@@ -174,9 +174,7 @@ const Admin = () => {
       setShowImageForm(false);
       toast({ title: "Image enregistrée !" });
     },
-    onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    },
+    onError: (error: any) => toast({ title: "Erreur", description: error.message, variant: "destructive" }),
   });
 
   const deleteImageMutation = useMutation({
@@ -191,101 +189,159 @@ const Admin = () => {
     },
   });
 
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setMobileNavOpen(false);
+  };
+
+  // Sidebar nav content (shared between desktop sidebar and mobile sheet)
+  const navContent = (
+    <nav className="flex-1 py-4 space-y-1 px-2">
+      {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+        <button
+          key={item.key}
+          onClick={() => handleTabChange(item.key)}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === item.key
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {item.icon}
+          <span>{item.label}</span>
+          {item.key === "messages" && (messages?.length || 0) > 0 && (
+            <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full">
+              {messages?.length}
+            </span>
+          )}
+        </button>
+      ))}
+    </nav>
+  );
+
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 bg-card border-r border-border flex flex-col transition-all duration-200 ${
-          sidebarOpen ? "w-56" : "w-16"
-        }`}
-      >
-        {/* Logo area */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-          {sidebarOpen && <span className="font-bold text-foreground text-sm">Administration</span>}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="w-8 h-8"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </Button>
-        </div>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 bg-card border-r border-border flex flex-col transition-all duration-200 ${
+            sidebarOpen ? "w-56" : "w-16"
+          }`}
+        >
+          <div className="h-14 flex items-center justify-between px-4 border-b border-border">
+            {sidebarOpen && <span className="font-bold text-foreground text-sm">Administration</span>}
+            <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </Button>
+          </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 py-4 space-y-1 px-2">
-          {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+          {sidebarOpen ? (
+            navContent
+          ) : (
+            <nav className="flex-1 py-4 space-y-1 px-2">
+              {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => handleTabChange(item.key)}
+                  className={`w-full flex items-center justify-center p-2.5 rounded-lg transition-colors ${
+                    activeTab === item.key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  title={item.label}
+                >
+                  {item.icon}
+                </button>
+              ))}
+            </nav>
+          )}
+
+          <div className="p-2 border-t border-border">
             <button
-              key={item.key}
-              onClick={() => setActiveTab(item.key)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === item.key
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              title={item.label}
+              onClick={handleLogout}
+              className={`w-full flex items-center ${sidebarOpen ? "gap-3 px-3" : "justify-center"} py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors`}
+              title="Déconnexion"
             >
-              {item.icon}
-              {sidebarOpen && <span>{item.label}</span>}
-              {sidebarOpen && item.key === "messages" && (messages?.length || 0) > 0 && (
-                <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full">
-                  {messages?.length}
-                </span>
-              )}
+              <LogOut className="w-5 h-5" />
+              {sidebarOpen && <span>Déconnexion</span>}
             </button>
-          ))}
-        </nav>
+          </div>
+        </aside>
+      )}
 
-        {/* Logout */}
-        <div className="p-2 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            title="Déconnexion"
-          >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span>Déconnexion</span>}
-          </button>
-        </div>
-      </aside>
+      {/* Mobile Header */}
+      {isMobile && (
+        <header className="fixed top-0 left-0 right-0 z-40 h-14 bg-card border-b border-border flex items-center justify-between px-4">
+          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="ghost" className="w-9 h-9">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0 flex flex-col">
+              <div className="h-14 flex items-center px-4 border-b border-border">
+                <span className="font-bold text-foreground text-sm">Administration</span>
+              </div>
+              {navContent}
+              <div className="p-2 border-t border-border">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Déconnexion</span>
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
+          <span className="font-semibold text-foreground text-sm">
+            {NAV_ITEMS.find((i) => i.key === activeTab)?.label || "Administration"}
+          </span>
+          <div className="w-9" /> {/* Spacer for centering */}
+        </header>
+      )}
 
       {/* Main content */}
-      <main className={`flex-1 transition-all duration-200 ${sidebarOpen ? "ml-56" : "ml-16"}`}>
-        <div className="max-w-6xl mx-auto px-6 py-8">
+      <main
+        className={`flex-1 transition-all duration-200 ${
+          isMobile ? "mt-14" : sidebarOpen ? "ml-56" : "ml-16"
+        }`}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
           {/* Content Tab */}
           {activeTab === "content" && (
             <div className="grid lg:grid-cols-[200px_1fr] gap-6">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Pages</p>
-                {Object.entries(PAGE_CONTENT_STRUCTURE).map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveContentPage(key)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeContentPage === key
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {config.label}
-                  </button>
-                ))}
+                <div className={`${isMobile ? "flex flex-wrap gap-2" : "space-y-1"}`}>
+                  {Object.entries(PAGE_CONTENT_STRUCTURE).map(([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => setActiveContentPage(key)}
+                      className={`${isMobile ? "px-3 py-1.5 rounded-full text-xs" : "w-full text-left px-3 py-2 rounded-lg text-sm"} font-medium transition-colors ${
+                        activeContentPage === key
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <ContentEditor key={activeContentPage} pageKey={activeContentPage} />
             </div>
           )}
 
-          {/* Media Tab */}
           {activeTab === "media" && <MediaManager />}
 
-          {/* Products Tab */}
           {activeTab === "products" && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Produits</h2>
-                <Button onClick={() => { setEditingProduct({ name: "", description: "", price: "", category: "artisanat", image_url: "", in_stock: true }); setShowProductForm(true); }}>
-                  <Plus className="w-4 h-4 mr-2" />Ajouter un produit
+                <h2 className="text-xl sm:text-2xl font-bold">Produits</h2>
+                <Button size={isMobile ? "sm" : "default"} onClick={() => { setEditingProduct({ name: "", description: "", price: "", category: "artisanat", image_url: "", in_stock: true }); setShowProductForm(true); }}>
+                  <Plus className="w-4 h-4 mr-1" />Ajouter
                 </Button>
               </div>
               {showProductForm && editingProduct && (
@@ -294,9 +350,9 @@ const Admin = () => {
               <div className="grid gap-4">
                 {productsLoading ? <p>Chargement...</p> : products?.map((product) => (
                   <div key={product.id} className="bg-card border border-border rounded-xl p-4 flex gap-4 items-center">
-                    <img src={product.image_url || "/placeholder.svg"} alt={product.name} className="w-20 h-20 object-cover rounded-lg" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{product.name}</h3>
+                    <img src={product.image_url || "/placeholder.svg"} alt={product.name} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate">{product.name}</h3>
                       <p className="text-sm text-muted-foreground">{product.category}</p>
                       <p className="text-primary font-bold">{Number(product.price).toFixed(2)} €</p>
                     </div>
@@ -310,28 +366,27 @@ const Admin = () => {
             </div>
           )}
 
-          {/* Gallery Tab */}
           {activeTab === "gallery" && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Galerie</h2>
-                <Button onClick={() => { setEditingImage({ title: "", description: "", image_url: "", category: "agriculture" }); setShowImageForm(true); }}>
-                  <Plus className="w-4 h-4 mr-2" />Ajouter une image
+                <h2 className="text-xl sm:text-2xl font-bold">Galerie</h2>
+                <Button size={isMobile ? "sm" : "default"} onClick={() => { setEditingImage({ title: "", description: "", image_url: "", category: "agriculture" }); setShowImageForm(true); }}>
+                  <Plus className="w-4 h-4 mr-1" />Ajouter
                 </Button>
               </div>
               {showImageForm && editingImage && (
                 <ImageForm image={editingImage} onSave={(img) => saveImageMutation.mutate(img)} onCancel={() => { setShowImageForm(false); setEditingImage(null); }} isLoading={saveImageMutation.isPending} />
               )}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {galleryLoading ? <p>Chargement...</p> : galleryImages?.map((image) => (
                   <div key={image.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                    <img src={image.image_url} alt={image.title} className="w-full h-40 object-cover" />
-                    <div className="p-4">
-                      <h3 className="font-semibold">{image.title}</h3>
-                      <p className="text-sm text-muted-foreground">{image.category}</p>
-                      <div className="flex gap-2 mt-3">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingImage(image); setShowImageForm(true); }}><Pencil className="w-4 h-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteImageMutation.mutate(image.id)}><Trash2 className="w-4 h-4" /></Button>
+                    <img src={image.image_url} alt={image.title} className="w-full h-32 sm:h-40 object-cover" />
+                    <div className="p-3 sm:p-4">
+                      <h3 className="font-semibold text-sm sm:text-base truncate">{image.title}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{image.category}</p>
+                      <div className="flex gap-2 mt-2 sm:mt-3">
+                        <Button size="sm" variant="outline" onClick={() => { setEditingImage(image); setShowImageForm(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteImageMutation.mutate(image.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                       </div>
                     </div>
                   </div>
@@ -340,10 +395,9 @@ const Admin = () => {
             </div>
           )}
 
-          {/* Messages Tab */}
           {activeTab === "messages" && (
             <div>
-              <h2 className="text-2xl font-bold mb-6">Messages reçus</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-6">Messages reçus</h2>
               <div className="grid gap-4">
                 {messagesLoading ? <p>Chargement...</p> : messages?.length === 0 ? (
                   <p className="text-muted-foreground">Aucun message reçu.</p>
@@ -351,8 +405,8 @@ const Admin = () => {
                   <div key={msg.id} className="bg-card border border-border rounded-xl p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-semibold">{msg.first_name} {msg.name}</h3>
-                        <p className="text-sm text-muted-foreground">{msg.email}</p>
+                        <h3 className="font-semibold text-sm sm:text-base">{msg.first_name} {msg.name}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{msg.email}</p>
                       </div>
                       <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleDateString("fr-FR")}</span>
                     </div>
@@ -364,11 +418,10 @@ const Admin = () => {
             </div>
           )}
 
-          {/* Users Tab */}
           {activeTab === "users" && isAdmin && (
             <div>
-              <h2 className="text-2xl font-bold mb-6">Gestion des utilisateurs</h2>
-              <div className="bg-card border border-border rounded-xl p-6 mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold mb-6">Gestion des utilisateurs</h2>
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-primary" />Utilisateurs avec des rôles
                 </h3>
@@ -377,11 +430,11 @@ const Admin = () => {
                     <p className="text-muted-foreground">Aucun utilisateur avec un rôle.</p>
                   ) : userRoles?.map((ur: any) => (
                     <div key={ur.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-sm">{ur.user_id}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{ur.user_id}</p>
                         <p className="text-xs text-muted-foreground">Créé le {new Date(ur.created_at).toLocaleDateString("fr-FR")}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${
                         ur.role === 'admin' ? 'bg-primary text-primary-foreground' : ur.role === 'moderator' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'
                       }`}>{ur.role}</span>
                     </div>
@@ -405,7 +458,7 @@ const Admin = () => {
 const ProductForm = ({ product, onSave, onCancel, isLoading }: { product: any; onSave: (p: any) => void; onCancel: () => void; isLoading: boolean }) => {
   const [form, setForm] = useState(product);
   return (
-    <div className="bg-card border border-border rounded-xl p-6 mb-6">
+    <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold">{product.id ? "Modifier" : "Ajouter"} un produit</h3>
         <Button size="sm" variant="ghost" onClick={onCancel}><X className="w-4 h-4" /></Button>
@@ -429,7 +482,7 @@ const ProductForm = ({ product, onSave, onCancel, isLoading }: { product: any; o
 const ImageForm = ({ image, onSave, onCancel, isLoading }: { image: any; onSave: (img: any) => void; onCancel: () => void; isLoading: boolean }) => {
   const [form, setForm] = useState(image);
   return (
-    <div className="bg-card border border-border rounded-xl p-6 mb-6">
+    <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold">{image.id ? "Modifier" : "Ajouter"} une image</h3>
         <Button size="sm" variant="ghost" onClick={onCancel}><X className="w-4 h-4" /></Button>
