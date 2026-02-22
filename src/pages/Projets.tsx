@@ -61,6 +61,13 @@ const Projets = () => {
                   key={project.id}
                   className="bg-card rounded-2xl border border-border overflow-hidden card-hover"
                 >
+                  {project.image_url && (
+                    <img
+                      src={project.image_url}
+                      alt={project.title}
+                      className="w-full h-48 sm:h-56 object-cover"
+                    />
+                  )}
                   <div className="p-8">
                     <div className="flex flex-wrap items-center gap-4 mb-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${

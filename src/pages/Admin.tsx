@@ -443,7 +443,7 @@ const Admin = () => {
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold">Projets</h2>
-                <Button size={isMobile ? "sm" : "default"} onClick={() => { setEditingProject({ title: "", date: "En cours", category: "", description: "", icon: "Sprout", color: "primary", sort_order: (adminProjects?.length || 0) + 1, is_active: true }); setShowProjectForm(true); }}>
+                <Button size={isMobile ? "sm" : "default"} onClick={() => { setEditingProject({ title: "", date: "En cours", category: "", description: "", icon: "Sprout", color: "primary", sort_order: (adminProjects?.length || 0) + 1, is_active: true, image_url: "" }); setShowProjectForm(true); }}>
                   <Plus className="w-4 h-4 mr-1" />Ajouter
                 </Button>
               </div>
@@ -609,6 +609,7 @@ const ProjectForm = ({ project, onSave, onCancel, isLoading }: { project: any; o
           </select>
         </div>
         <div><label className="block text-sm font-medium mb-1">Ordre</label><Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} /></div>
+        <div className="sm:col-span-2"><label className="block text-sm font-medium mb-1">Image</label><ImageUpload value={form.image_url || ""} onChange={(url) => setForm({ ...form, image_url: url })} folder="projects" /></div>
         <div className="sm:col-span-2"><label className="block text-sm font-medium mb-1">Description</label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description du projet" rows={4} /></div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
