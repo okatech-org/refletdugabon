@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogIn } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import logoRefletGabon from "@/assets/logo-reflet-gabon-transparent.png";
 
 const navigation = [
@@ -18,12 +19,29 @@ const navigation = [
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    navigate("/");
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass">
       <nav className="section-container flex items-center justify-between py-4">
-        {/* Logo - Full logo on all screens */}
         <Link to="/" className="flex items-center gap-2 group">
           <img 
             src={logoRefletGabon} 
@@ -51,12 +69,27 @@ export const Header = () => {
 
         {/* CTA Buttons */}
         <div className="hidden lg:flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/login">
-              <LogIn className="w-4 h-4 mr-2" />
-              Se connecter
-            </Link>
-          </Button>
+          {user ? (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin">
+                  <User className="w-4 h-4 mr-2" />
+                  {user.email?.split("@")[0]}
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Déconnexion
+              </Button>
+            </>
+          ) : (
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/login">
+                <LogIn className="w-4 h-4 mr-2" />
+                Se connecter
+              </Link>
+            </Button>
+          )}
           <Button asChild className="bg-gradient-primary hover:opacity-90 text-primary-foreground shadow-sm">
             <Link to="/contact">Nous Soutenir</Link>
           </Button>
@@ -94,12 +127,27 @@ export const Header = () => {
               </Link>
             ))}
             <div className="pt-4 space-y-2">
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/admin/login" onClick={() => setMobileMenuOpen(false)}>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Se connecter
-                </Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                      <User className="w-4 h-4 mr-2" />
+                      {user.email?.split("@")[0]}
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="w-full" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Déconnexion
+                  </Button>
+                </>
+              ) : (
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/admin/login" onClick={() => setMobileMenuOpen(false)}>
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Se connecter
+                  </Link>
+                </Button>
+              )}
               <Button asChild className="w-full bg-gradient-primary text-primary-foreground">
                 <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
                   Nous Soutenir
