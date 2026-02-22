@@ -27,15 +27,17 @@ import {
   ImageIcon,
   Menu,
   ChevronLeft,
+  FolderOpen,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-type Tab = "content" | "media" | "products" | "gallery" | "messages" | "users";
+type Tab = "content" | "media" | "products" | "gallery" | "messages" | "users" | "projects";
 
 const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { key: "content", label: "Contenu", icon: <FileText className="w-5 h-5" /> },
   { key: "media", label: "Médias", icon: <ImageIcon className="w-5 h-5" /> },
   { key: "products", label: "Produits", icon: <Package className="w-5 h-5" /> },
+  { key: "projects", label: "Projets", icon: <FolderOpen className="w-5 h-5" /> },
   { key: "gallery", label: "Galerie", icon: <Image className="w-5 h-5" /> },
   { key: "messages", label: "Messages", icon: <Mail className="w-5 h-5" /> },
   { key: "users", label: "Utilisateurs", icon: <Users className="w-5 h-5" />, adminOnly: true },
@@ -49,8 +51,10 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState<Tab>("content");
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingImage, setEditingImage] = useState<any>(null);
+  const [editingProject, setEditingProject] = useState<any>(null);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showImageForm, setShowImageForm] = useState(false);
+  const [showProjectForm, setShowProjectForm] = useState(false);
   const [activeContentPage, setActiveContentPage] = useState("accueil");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -122,6 +126,15 @@ const Admin = () => {
 
   const isAdmin = currentUserRole === "admin";
 
+  const { data: adminProjects, isLoading: projectsLoading } = useQuery({
+    queryKey: ["admin-projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Mutations
   const saveProductMutation = useMutation({
     mutationFn: async (product: any) => {
@@ -186,6 +199,37 @@ const Admin = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-gallery"] });
       queryClient.invalidateQueries({ queryKey: ["gallery_images"] });
       toast({ title: "Image supprimée" });
+    },
+  });
+
+  const saveProjectMutation = useMutation({
+    mutationFn: async (project: any) => {
+      if (project.id) {
+        const { error } = await supabase.from("projects").update(project).eq("id", project.id);
+        if (error) throw error;
+      } else {
+        const { id, ...d } = project;
+        const { error } = await supabase.from("projects").insert(d);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
+      setEditingProject(null);
+      setShowProjectForm(false);
+      toast({ title: "Projet enregistré !" });
+    },
+    onError: (error: any) => toast({ title: "Erreur", description: error.message, variant: "destructive" }),
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("projects").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
+      toast({ title: "Projet supprimé" });
     },
   });
 
@@ -395,6 +439,40 @@ const Admin = () => {
             </div>
           )}
 
+          {activeTab === "projects" && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold">Projets</h2>
+                <Button size={isMobile ? "sm" : "default"} onClick={() => { setEditingProject({ title: "", date: "En cours", category: "", description: "", icon: "Sprout", color: "primary", sort_order: (adminProjects?.length || 0) + 1, is_active: true }); setShowProjectForm(true); }}>
+                  <Plus className="w-4 h-4 mr-1" />Ajouter
+                </Button>
+              </div>
+              {showProjectForm && editingProject && (
+                <ProjectForm project={editingProject} onSave={(p) => saveProjectMutation.mutate(p)} onCancel={() => { setShowProjectForm(false); setEditingProject(null); }} isLoading={saveProjectMutation.isPending} />
+              )}
+              <div className="grid gap-4">
+                {projectsLoading ? <p>Chargement...</p> : adminProjects?.map((project) => (
+                  <div key={project.id} className="bg-card border border-border rounded-xl p-4 flex gap-4 items-start">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      project.color === "primary" ? "bg-primary" : project.color === "gold" ? "bg-amber-500" : "bg-blue-500"
+                    }`}>
+                      <FolderOpen className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold">{project.title}</h3>
+                      <p className="text-sm text-muted-foreground">{project.category} • {project.date}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{project.description}</p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button size="sm" variant="outline" onClick={() => { setEditingProject(project); setShowProjectForm(true); }}><Pencil className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="destructive" onClick={() => deleteProjectMutation.mutate(project.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {activeTab === "messages" && (
             <div>
               <h2 className="text-xl sm:text-2xl font-bold mb-6">Messages reçus</h2>
@@ -492,6 +570,46 @@ const ImageForm = ({ image, onSave, onCancel, isLoading }: { image: any; onSave:
         <div><label className="block text-sm font-medium mb-1">Catégorie</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"><option value="agriculture">Agriculture</option><option value="culture">Culture</option><option value="restaurant">Restaurant</option></select></div>
         <div className="sm:col-span-2"><label className="block text-sm font-medium mb-1">Image</label><ImageUpload value={form.image_url || ""} onChange={(url) => setForm({ ...form, image_url: url })} folder="gallery" /></div>
         <div className="sm:col-span-2"><label className="block text-sm font-medium mb-1">Description</label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description de l'image" rows={2} /></div>
+      </div>
+      <div className="flex justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={onCancel}>Annuler</Button>
+        <Button onClick={() => onSave(form)} disabled={isLoading}><Save className="w-4 h-4 mr-2" />Enregistrer</Button>
+      </div>
+    </div>
+  );
+};
+
+// Project Form Component
+const ProjectForm = ({ project, onSave, onCancel, isLoading }: { project: any; onSave: (p: any) => void; onCancel: () => void; isLoading: boolean }) => {
+  const [form, setForm] = useState(project);
+  return (
+    <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold">{project.id ? "Modifier" : "Ajouter"} un projet</h3>
+        <Button size="sm" variant="ghost" onClick={onCancel}><X className="w-4 h-4" /></Button>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div><label className="block text-sm font-medium mb-1">Titre</label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Titre du projet" /></div>
+        <div><label className="block text-sm font-medium mb-1">Date</label><Input value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} placeholder="Ex: En cours, 2023, Juin 2022" /></div>
+        <div><label className="block text-sm font-medium mb-1">Catégorie</label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Ex: Agriculture, Restaurant, Partenariat" /></div>
+        <div><label className="block text-sm font-medium mb-1">Couleur</label>
+          <select value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
+            <option value="primary">Vert (primary)</option>
+            <option value="gold">Or (gold)</option>
+            <option value="ocean">Bleu (ocean)</option>
+          </select>
+        </div>
+        <div><label className="block text-sm font-medium mb-1">Icône</label>
+          <select value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
+            <option value="Sprout">Sprout (Agriculture)</option>
+            <option value="Award">Award (Prix)</option>
+            <option value="Package">Package (Matériel)</option>
+            <option value="Users">Users (Communauté)</option>
+            <option value="Heart">Heart (Solidarité)</option>
+          </select>
+        </div>
+        <div><label className="block text-sm font-medium mb-1">Ordre</label><Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} /></div>
+        <div className="sm:col-span-2"><label className="block text-sm font-medium mb-1">Description</label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description du projet" rows={4} /></div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <Button variant="outline" onClick={onCancel}>Annuler</Button>
