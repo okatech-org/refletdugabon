@@ -29,7 +29,7 @@ const MediaLibrary = ({ open, onClose, onSelect, folder }: MediaLibraryProps) =>
   const [activeFolder, setActiveFolder] = useState<string>(folder || "");
   const { toast } = useToast();
 
-  const folders = ["products", "gallery"];
+  const folders = ["products", "gallery", "content", "projects"];
 
   const { data: files, isLoading, refetch } = useQuery({
     queryKey: ["storage-files", activeFolder],

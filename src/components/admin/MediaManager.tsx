@@ -20,6 +20,7 @@ const FOLDERS = [
   { key: "products", label: "Produits" },
   { key: "gallery", label: "Galerie" },
   { key: "content", label: "Contenu" },
+  { key: "projects", label: "Projets" },
 ];
 
 const MediaManager = () => {
