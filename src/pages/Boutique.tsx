@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSiteContent, getContent, isSectionVisible } from "@/hooks/useSiteContent";
 
 const categories = [
   { id: "all", name: "Tous les produits", icon: ShoppingBag },
@@ -16,6 +17,7 @@ const categories = [
 
 const Boutique = () => {
   const { toast } = useToast();
+  const { data: content } = useSiteContent("boutique");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const { data: products, isLoading } = useQuery({
@@ -26,7 +28,6 @@ const Boutique = () => {
         .select("*")
         .eq("in_stock", true)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return data;
     },
@@ -46,23 +47,26 @@ const Boutique = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="pt-24 pb-12 bg-gradient-hero">
-        <div className="section-container">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
-              Boutique Express
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-              Artisanat{" "}
-              <span className="text-gradient-primary">Gabonais</span>
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Découvrez notre sélection de produits artisanaux authentiques et offrez des bons cadeaux 
-              pour le restaurant "Les Délices du Gabon".
-            </p>
+      {isSectionVisible(content, "hero") && (
+        <section className="pt-24 pb-12 bg-gradient-hero">
+          <div className="section-container">
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+                {getContent(content, "hero", "badge", "Boutique Express")}
+              </span>
+              <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
+                {getContent(content, "hero", "title", "Artisanat")}{" "}
+                <span className="text-gradient-primary">
+                  {getContent(content, "hero", "title_highlight", "Gabonais")}
+                </span>
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                {getContent(content, "hero", "description", "Découvrez notre sélection de produits artisanaux authentiques et offrez des bons cadeaux pour le restaurant \"Les Délices du Gabon\".")}
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Categories */}
       <section className="py-8 border-b border-border bg-card/50">
@@ -155,29 +159,30 @@ const Boutique = () => {
       </section>
 
       {/* Gift Cards Section */}
-      <section className="py-16 bg-gradient-hero">
-        <div className="section-container">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <Gift className="w-12 h-12 text-accent mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Offrez une Expérience Culinaire
-            </h2>
-            <p className="text-muted-foreground">
-              Nos bons cadeaux vous permettent d'offrir un moment de découverte 
-              gastronomique au restaurant "Les Délices du Gabon".
-            </p>
+      {isSectionVisible(content, "gift_cards") && (
+        <section className="py-16 bg-gradient-hero">
+          <div className="section-container">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <Gift className="w-12 h-12 text-accent mx-auto mb-4" />
+              <h2 className="text-3xl font-bold text-foreground mb-4">
+                {getContent(content, "gift_cards", "title", "Offrez une Expérience Culinaire")}
+              </h2>
+              <p className="text-muted-foreground">
+                {getContent(content, "gift_cards", "description", "Nos bons cadeaux vous permettent d'offrir un moment de découverte gastronomique au restaurant \"Les Délices du Gabon\".")}
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <Button
+                size="lg"
+                onClick={() => setSelectedCategory("bons-cadeaux")}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                Voir les Bons Cadeaux
+              </Button>
+            </div>
           </div>
-          <div className="flex justify-center">
-            <Button
-              size="lg"
-              onClick={() => setSelectedCategory("bons-cadeaux")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              Voir les Bons Cadeaux
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </Layout>
   );
 };

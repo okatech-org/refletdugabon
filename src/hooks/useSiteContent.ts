@@ -46,6 +46,19 @@ export const getContent = (
   return item?.content_value || fallback;
 };
 
+// Helper to check if a section is visible (defaults to true if no entry exists)
+export const isSectionVisible = (
+  data: SiteContentItem[] | undefined,
+  section: string
+): boolean => {
+  if (!data) return true;
+  const item = data.find(
+    (d) => d.section === section && d.content_key === "_visible"
+  );
+  if (!item) return true;
+  return item.content_value !== "false";
+};
+
 // Hook for admin to save content
 export const useSaveContent = () => {
   const queryClient = useQueryClient();
@@ -136,6 +149,51 @@ export const useSaveBulkContent = () => {
   });
 };
 
+// Hook to toggle section visibility
+export const useToggleSectionVisibility = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      page,
+      section,
+      visible,
+    }: {
+      page: string;
+      section: string;
+      visible: boolean;
+    }) => {
+      const { data: existing } = await supabase
+        .from("site_content")
+        .select("id")
+        .eq("page", page)
+        .eq("section", section)
+        .eq("content_key", "_visible")
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("site_content")
+          .update({ content_value: visible ? "true" : "false" })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("site_content").insert({
+          page,
+          section,
+          content_key: "_visible",
+          content_value: visible ? "true" : "false",
+          content_type: "system",
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["site-content"] });
+    },
+  });
+};
+
 // Field definition with optional default value
 export interface FieldDef {
   key: string;
@@ -187,6 +245,26 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
           { key: "floating_text", label: "Carte flottante - Texte", type: "text", defaultValue: "Années d'engagement" },
         ],
       },
+      pillars: {
+        label: "Nos 3 Piliers",
+        fields: [
+          { key: "badge", label: "Badge", type: "text", defaultValue: "Nos 3 Piliers" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Les Moyens de Notre Action" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Trois initiatives complémentaires pour construire un avenir durable et solidaire entre la France et le Gabon." },
+          { key: "pillar1_title", label: "Pilier 1 - Titre", type: "text", defaultValue: "Coopérative Agricole" },
+          { key: "pillar1_subtitle", label: "Pilier 1 - Sous-titre", type: "text", defaultValue: "Nkoltang, Gabon" },
+          { key: "pillar1_description", label: "Pilier 1 - Description", type: "text", defaultValue: "Formation et accompagnement des jeunes et des femmes dans l'agriculture durable. Lutte contre la faim et la pauvreté en zone rurale." },
+          { key: "pillar1_image", label: "Pilier 1 - Image", type: "image", defaultValue: farmerWomanImage },
+          { key: "pillar2_title", label: "Pilier 2 - Titre", type: "text", defaultValue: "Les Délices du Gabon" },
+          { key: "pillar2_subtitle", label: "Pilier 2 - Sous-titre", type: "text", defaultValue: "Restaurant Associatif" },
+          { key: "pillar2_description", label: "Pilier 2 - Description", type: "text", defaultValue: "Gastronomie africaine authentique en Normandie. Finaliste du prix 'Cuistos Engagés' pour notre approche écoresponsable." },
+          { key: "pillar2_image", label: "Pilier 2 - Image", type: "image", defaultValue: restaurantImage },
+          { key: "pillar3_title", label: "Pilier 3 - Titre", type: "text", defaultValue: "Groupe Culturel" },
+          { key: "pillar3_subtitle", label: "Pilier 3 - Sous-titre", type: "text", defaultValue: "Ambassadeurs Culturels" },
+          { key: "pillar3_description", label: "Pilier 3 - Description", type: "text", defaultValue: "Valorisation de la culture gabonaise à travers les danses traditionnelles, la musique et les animations culturelles." },
+          { key: "pillar3_image", label: "Pilier 3 - Image", type: "image", defaultValue: culturalDanceImage },
+        ],
+      },
       impact: {
         label: "Section Impact",
         fields: [
@@ -217,15 +295,15 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       hero: {
         label: "Section Héro",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Nos Moyens" },
-          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "d'Action" },
-          { key: "description", label: "Description", type: "text", defaultValue: "Trois piliers complémentaires pour un impact durable" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Trois Piliers pour un" },
+          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "Impact Durable" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Découvrez les moyens concrets par lesquels notre association œuvre pour l'autonomisation des communautés gabonaises." },
         ],
       },
       cooperative: {
         label: "Section Coopérative",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Coopérative Agricole" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Coopérative Agricole à Nkoltang" },
           { key: "description", label: "Description", type: "rich_text" },
           { key: "image", label: "Image", type: "image", defaultValue: farmerWomanImage },
         ],
@@ -233,7 +311,7 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       restaurant: {
         label: "Section Restaurant",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Restaurant" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Restaurant \"Les Délices du Gabon\"" },
           { key: "description", label: "Description", type: "rich_text" },
           { key: "image", label: "Image", type: "image", defaultValue: restaurantImage },
         ],
@@ -241,7 +319,7 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       culture: {
         label: "Section Culture",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Culture" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Groupe Culturel" },
           { key: "description", label: "Description", type: "rich_text" },
           { key: "image", label: "Image", type: "image", defaultValue: culturalDanceImage },
         ],
@@ -255,22 +333,42 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
         label: "Section Héro",
         fields: [
           { key: "title", label: "Titre", type: "text", defaultValue: "Coopérative Agricole de Nkoltang" },
-          { key: "subtitle", label: "Sous-titre", type: "text", defaultValue: "Former, produire, nourrir" },
+          { key: "subtitle", label: "Sous-titre", type: "text", defaultValue: "Agriculture durable pour l'autonomisation des femmes gabonaises." },
           { key: "image", label: "Image de fond", type: "image", defaultValue: heroAgricultureImage },
+        ],
+      },
+      stats: {
+        label: "Statistiques",
+        fields: [
+          { key: "stat1_value", label: "Stat 1 - Valeur", type: "text", defaultValue: "10" },
+          { key: "stat1_label", label: "Stat 1 - Label", type: "text", defaultValue: "Hectares Cultivés" },
+          { key: "stat2_value", label: "Stat 2 - Valeur", type: "text", defaultValue: "200+" },
+          { key: "stat2_label", label: "Stat 2 - Label", type: "text", defaultValue: "Femmes Formées" },
+          { key: "stat3_value", label: "Stat 3 - Valeur", type: "text", defaultValue: "30 km" },
+          { key: "stat3_label", label: "Stat 3 - Label", type: "text", defaultValue: "De Libreville" },
+          { key: "stat4_value", label: "Stat 4 - Valeur", type: "text", defaultValue: "15+" },
+          { key: "stat4_label", label: "Stat 4 - Label", type: "text", defaultValue: "Cultures Différentes" },
         ],
       },
       about: {
         label: "Section À propos",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Notre Coopérative" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Transformer des Vies par l'Agriculture" },
           { key: "description", label: "Description", type: "rich_text" },
+        ],
+      },
+      activities: {
+        label: "Activités",
+        fields: [
+          { key: "title", label: "Titre de la section", type: "text", defaultValue: "Nos Activités" },
+          { key: "description", label: "Description", type: "text", defaultValue: "De la formation à la production, nous couvrons toute la chaîne de valeur agricole." },
         ],
       },
       cta: {
         label: "Section CTA",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Soutenez la coopérative" },
-          { key: "description", label: "Description", type: "text", defaultValue: "Votre soutien contribue directement à l'autonomie alimentaire au Gabon." },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Soutenez Notre Coopérative" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Votre soutien permet de former plus de femmes, d'acquérir du matériel agricole et de développer nos activités pour un impact encore plus grand." },
         ],
       },
     },
@@ -281,8 +379,8 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       hero: {
         label: "Section Héro",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Culture & Traditions" },
-          { key: "subtitle", label: "Sous-titre", type: "text", defaultValue: "Préserver et transmettre le patrimoine gabonais" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Groupe Culturel Gabonais" },
+          { key: "subtitle", label: "Sous-titre", type: "text", defaultValue: "Valorisation de la culture gabonaise à travers les arts traditionnels." },
           { key: "image", label: "Image de fond", type: "image", defaultValue: culturalDanceImage },
         ],
       },
@@ -293,11 +391,18 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
           { key: "description", label: "Description", type: "rich_text" },
         ],
       },
+      prestations: {
+        label: "Prestations",
+        fields: [
+          { key: "title", label: "Titre", type: "text", defaultValue: "Nos Prestations" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Une gamme complète de services culturels pour tous vos événements." },
+        ],
+      },
       cta: {
         label: "Section CTA",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Participez à nos événements" },
-          { key: "description", label: "Description", type: "text", defaultValue: "Rejoignez-nous pour célébrer la culture gabonaise." },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Réservez Notre Groupe" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Vous organisez un événement ? Notre groupe culturel apportera une touche d'authenticité africaine mémorable à votre célébration." },
         ],
       },
     },
@@ -308,9 +413,51 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       hero: {
         label: "Section Héro",
         fields: [
+          { key: "title", label: "Titre", type: "text", defaultValue: "Activités et" },
+          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "Projets Récents" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Suivez nos actualités et découvrez l'impact concret de nos actions sur le terrain au Gabon et en France." },
+        ],
+      },
+      cta: {
+        label: "Section CTA",
+        fields: [
+          { key: "text", label: "Texte", type: "text", defaultValue: "Vous souhaitez contribuer à nos prochains projets ?" },
+        ],
+      },
+    },
+  },
+  boutique: {
+    label: "Boutique",
+    sections: {
+      hero: {
+        label: "Section Héro",
+        fields: [
+          { key: "badge", label: "Badge", type: "text", defaultValue: "Boutique Express" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Artisanat" },
+          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "Gabonais" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Découvrez notre sélection de produits artisanaux authentiques et offrez des bons cadeaux pour le restaurant \"Les Délices du Gabon\"." },
+        ],
+      },
+      gift_cards: {
+        label: "Bons Cadeaux",
+        fields: [
+          { key: "title", label: "Titre", type: "text", defaultValue: "Offrez une Expérience Culinaire" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Nos bons cadeaux vous permettent d'offrir un moment de découverte gastronomique au restaurant \"Les Délices du Gabon\"." },
+        ],
+      },
+    },
+  },
+  galerie: {
+    label: "Galerie",
+    sections: {
+      hero: {
+        label: "Section Héro",
+        fields: [
+          { key: "badge", label: "Badge", type: "text", defaultValue: "Galerie Photos" },
           { key: "title", label: "Titre", type: "text", defaultValue: "Nos" },
-          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "Projets" },
-          { key: "description", label: "Description", type: "text", defaultValue: "Découvrez nos initiatives pour un Gabon durable" },
+          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "Moments" },
+          { key: "title_suffix", label: "Titre (suite)", type: "text", defaultValue: "en Images" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Découvrez en images nos activités agricoles à Nkoltang, nos événements culturels et l'ambiance du restaurant \"Les Délices du Gabon\"." },
         ],
       },
     },
@@ -321,17 +468,17 @@ export const PAGE_CONTENT_STRUCTURE: Record<string, PageDef> = {
       hero: {
         label: "Section Héro",
         fields: [
-          { key: "title", label: "Titre", type: "text", defaultValue: "Contactez" },
-          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "-nous" },
-          { key: "description", label: "Description", type: "text", defaultValue: "N'hésitez pas à nous écrire" },
+          { key: "title", label: "Titre", type: "text", defaultValue: "Parlons de Votre" },
+          { key: "title_highlight", label: "Titre (partie colorée)", type: "text", defaultValue: "Engagement" },
+          { key: "description", label: "Description", type: "text", defaultValue: "Une question, une idée de partenariat ou envie de nous rejoindre ? Notre équipe est à votre écoute." },
         ],
       },
       info: {
         label: "Informations",
         fields: [
-          { key: "address", label: "Adresse", type: "text", defaultValue: "Rouen, Normandie, France" },
-          { key: "phone", label: "Téléphone", type: "text", defaultValue: "+33 6 XX XX XX XX" },
-          { key: "email", label: "Email", type: "text", defaultValue: "contact@refletdugabon.fr" },
+          { key: "address", label: "Adresse", type: "text", defaultValue: "Verneuil-sur-Avre, Normandie, France" },
+          { key: "phone", label: "Téléphone", type: "text", defaultValue: "+33 6 81 65 78 70" },
+          { key: "email", label: "Email", type: "text", defaultValue: "assorefletdugabon@yahoo.com" },
         ],
       },
     },
