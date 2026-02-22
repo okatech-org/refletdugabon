@@ -118,18 +118,16 @@ const Admin = () => {
     },
   });
 
-  const { data: currentUserRole } = useQuery({
-    queryKey: ["current-user-role"],
+  const { data: isAdmin } = useQuery({
+    queryKey: ["current-user-is-admin"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", user.id).single();
-      if (error) return null;
-      return data?.role;
+      if (!user) return false;
+      const { data, error } = await supabase.rpc("is_admin");
+      if (error) return false;
+      return data === true;
     },
   });
-
-  const isAdmin = currentUserRole === "admin";
 
   const { data: adminProjects, isLoading: projectsLoading } = useQuery({
     queryKey: ["admin-projects"],
