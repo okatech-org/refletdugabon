@@ -1,41 +1,30 @@
 import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
-import { Calendar, ArrowRight, Sprout, Award, Package } from "lucide-react";
+import { Calendar, ArrowRight, Sprout, Award, Package, Users, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSiteContent, getContent } from "@/hooks/useSiteContent";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const projects = [
-  {
-    id: 1,
-    title: "Développement de la Coopérative Agricole",
-    date: "En cours",
-    category: "Agriculture",
-    description: "Extension de notre site agricole de Nkoltang avec de nouvelles parcelles et formation de 50 nouvelles bénéficiaires aux techniques de culture maraîchère.",
-    icon: Sprout,
-    color: "primary",
-  },
-  {
-    id: 2,
-    title: "Prix Cuistos Engagés 2022",
-    date: "Juin 2022",
-    category: "Restaurant",
-    description: "Notre restaurant 'Les Délices du Gabon' a été finaliste du prix des Cuistos Engagés organisé par MIIMOSA à Paris, récompensant notre approche écoresponsable.",
-    icon: Award,
-    color: "gold",
-  },
-  {
-    id: 3,
-    title: "Don de Matériel Agricole",
-    date: "2023",
-    category: "Partenariat",
-    description: "Réception d'un don de matériel agricole de l'ONG IDRC AFRICA permettant d'améliorer significativement nos capacités de production à Nkoltang.",
-    icon: Package,
-    color: "ocean",
-  },
-];
+const iconMap: Record<string, React.ComponentType<any>> = {
+  Sprout, Award, Package, Users, Heart,
+};
 
 const Projets = () => {
   const { data: content } = useSiteContent("projets");
+
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
 
   return (
     <Layout>
@@ -63,43 +52,48 @@ const Projets = () => {
       <section className="py-20">
         <div className="section-container">
           <div className="max-w-4xl mx-auto space-y-8">
-            {projects.map((project) => (
-              <article
-                key={project.id}
-                className="bg-card rounded-2xl border border-border overflow-hidden card-hover"
-              >
-                <div className="p-8">
-                  <div className="flex flex-wrap items-center gap-4 mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      project.color === "primary" ? "bg-primary" :
-                      project.color === "gold" ? "bg-gold" : "bg-ocean"
-                    }`}>
-                      <project.icon className="w-6 h-6 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <span className={`text-sm font-medium ${
-                        project.color === "primary" ? "text-primary" :
-                        project.color === "gold" ? "text-gold" : "text-ocean"
+            {isLoading ? (
+              <p className="text-center text-muted-foreground">Chargement...</p>
+            ) : projects?.map((project) => {
+              const IconComp = iconMap[project.icon] || Sprout;
+              return (
+                <article
+                  key={project.id}
+                  className="bg-card rounded-2xl border border-border overflow-hidden card-hover"
+                >
+                  <div className="p-8">
+                    <div className="flex flex-wrap items-center gap-4 mb-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        project.color === "primary" ? "bg-primary" :
+                        project.color === "gold" ? "bg-amber-500" : "bg-blue-500"
                       }`}>
-                        {project.category}
-                      </span>
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <Calendar className="w-4 h-4" />
-                        {project.date}
+                        <IconComp className="w-6 h-6 text-primary-foreground" />
+                      </div>
+                      <div>
+                        <span className={`text-sm font-medium ${
+                          project.color === "primary" ? "text-primary" :
+                          project.color === "gold" ? "text-amber-500" : "text-blue-500"
+                        }`}>
+                          {project.category}
+                        </span>
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <Calendar className="w-4 h-4" />
+                          {project.date}
+                        </div>
                       </div>
                     </div>
+                    
+                    <h2 className="text-2xl font-bold text-foreground mb-4">
+                      {project.title}
+                    </h2>
+                    
+                    <p className="text-muted-foreground leading-relaxed">
+                      {project.description}
+                    </p>
                   </div>
-                  
-                  <h2 className="text-2xl font-bold text-foreground mb-4">
-                    {project.title}
-                  </h2>
-                  
-                  <p className="text-muted-foreground leading-relaxed">
-                    {project.description}
-                  </p>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
 
           {/* CTA */}
