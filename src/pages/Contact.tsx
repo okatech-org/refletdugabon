@@ -7,6 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteContent, getContent } from "@/hooks/useSiteContent";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  firstName: z.string().trim().min(1, "Le prénom est requis").max(100, "100 caractères maximum"),
+  lastName: z.string().trim().min(1, "Le nom est requis").max(100, "100 caractères maximum"),
+  email: z.string().trim().email("Adresse email invalide").max(255, "255 caractères maximum"),
+  phone: z.string().trim().max(30, "30 caractères maximum").optional().or(z.literal("")),
+  subject: z.string().trim().min(1, "Le sujet est requis").max(200, "200 caractères maximum"),
+  message: z.string().trim().min(1, "Le message est requis").max(5000, "5000 caractères maximum"),
+  consent: z.literal(true, { errorMap: () => ({ message: "Vous devez accepter" }) }),
+});
 
 const defaultContactInfo = [
   { icon: MapPin, title: "Adresse", contentKey: "address", defaultValue: "Verneuil-sur-Avre, Normandie, France", linkPrefix: null },
@@ -39,18 +50,32 @@ const Contact = () => {
     consent: false,
   });
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setFormErrors({});
 
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) errors[err.path[0] as string] = err.message;
+      });
+      setFormErrors(errors);
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
+      const validated = result.data;
       const { error } = await supabase.from("contact_messages").insert({
-        name: formData.lastName,
-        first_name: formData.firstName,
-        email: formData.email,
-        phone: formData.phone || null,
-        subject: formData.subject,
-        message: formData.message,
+        name: validated.lastName,
+        first_name: validated.firstName,
+        email: validated.email,
+        phone: validated.phone || null,
+        subject: validated.subject,
+        message: validated.message,
       });
 
       if (error) throw error;
@@ -201,8 +226,10 @@ const Contact = () => {
                           value={formData.firstName}
                           onChange={handleChange}
                           required
+                          maxLength={100}
                           placeholder="Votre prénom"
                         />
+                        {formErrors.firstName && <p className="text-destructive text-xs mt-1">{formErrors.firstName}</p>}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
@@ -213,8 +240,10 @@ const Contact = () => {
                           value={formData.lastName}
                           onChange={handleChange}
                           required
+                          maxLength={100}
                           placeholder="Votre nom"
                         />
+                        {formErrors.lastName && <p className="text-destructive text-xs mt-1">{formErrors.lastName}</p>}
                       </div>
                     </div>
 
@@ -229,8 +258,10 @@ const Contact = () => {
                           value={formData.email}
                           onChange={handleChange}
                           required
+                          maxLength={255}
                           placeholder="votre@email.com"
                         />
+                        {formErrors.email && <p className="text-destructive text-xs mt-1">{formErrors.email}</p>}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
@@ -241,6 +272,7 @@ const Contact = () => {
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
+                          maxLength={30}
                           placeholder="+33 6 00 00 00 00"
                         />
                       </div>
@@ -264,6 +296,7 @@ const Contact = () => {
                           </option>
                         ))}
                       </select>
+                      {formErrors.subject && <p className="text-destructive text-xs mt-1">{formErrors.subject}</p>}
                     </div>
 
                     <div>
@@ -275,9 +308,11 @@ const Contact = () => {
                         value={formData.message}
                         onChange={handleChange}
                         required
+                        maxLength={5000}
                         placeholder="Votre message..."
                         rows={6}
                       />
+                      {formErrors.message && <p className="text-destructive text-xs mt-1">{formErrors.message}</p>}
                     </div>
 
                     <div className="flex items-start gap-3">
